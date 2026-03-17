@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="TheTrail.Api/TheTrail.Api.csproj" />
+  <Project Path="TheTrail.Data/TheTrail.Data.csproj" />
+  <Project Path="TheTrail.Domain/TheTrail.Domain.csproj" />
+  <Project Path="TheTrail.Services.Core/TheTrail.Services.Core.csproj" />
+  <Project Path="TheTrail.Services/TheTrail.Services.csproj" />
+</Solution>
