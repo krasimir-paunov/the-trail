@@ -416,3 +416,24 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# The Trail — project specific
+
+# React / Vite build output
+dist/
+dist-ssr/
+*.local
+
+# Environment files (may contain secrets)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ASP.NET Core User Secrets (already outside project but just in case)
+secrets.json
+
+# PostgreSQL
+*.sql.bak
+pgdata/
+```
