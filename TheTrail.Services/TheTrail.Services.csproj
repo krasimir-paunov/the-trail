@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TheTrail.Data\TheTrail.Data.csproj" />
     <ProjectReference Include="..\TheTrail.Domain\TheTrail.Domain.csproj" />
     <ProjectReference Include="..\TheTrail.Services.Core\TheTrail.Services.Core.csproj" />
