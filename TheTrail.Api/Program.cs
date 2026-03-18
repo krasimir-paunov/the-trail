@@ -7,6 +7,7 @@ using System.Text;
 using TheTrail.Data;
 using TheTrail.Data.Interfaces;
 using TheTrail.Data.Repository;
+using TheTrail.Data.Seeding;
 using TheTrail.Domain.Entities;
 using TheTrail.Services;
 using TheTrail.Services.Core.Interfaces;
@@ -15,7 +16,7 @@ namespace TheTrail.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -96,6 +97,24 @@ namespace TheTrail.Api
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+
+            // Seed database
+            using (IServiceScope scope = app.Services.CreateScope())
+            {
+                try
+                {
+                    await DataSeeder.SeedAsync(
+                        scope.ServiceProvider.GetRequiredService<TheTrailDbContext>(),
+                        scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
+                        scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Seeding error: {ex.Message}");
+                    throw;
+                }
+            }
+
             app.Run();
         }
     }
