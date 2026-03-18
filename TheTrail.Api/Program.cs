@@ -32,6 +32,18 @@ namespace TheTrail.Api
             builder.Services.AddScoped<IEraService, EraService>();
             builder.Services.AddScoped<IChapterService, ChapterService>();
 
+            // CORS — allows React dev server to call the API
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("ReactDevClient", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             // Identity — must be registered before Authentication
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -80,6 +92,7 @@ namespace TheTrail.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("ReactDevClient");
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
