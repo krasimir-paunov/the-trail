@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using System.Text;
 using TheTrail.Data;
 using TheTrail.Data.Interfaces;
@@ -68,12 +69,14 @@ namespace TheTrail.Api
             });
 
             builder.Services.AddControllers();
+            builder.Services.AddOpenApi();
 
             WebApplication app = builder.Build();
 
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
             }
 
             app.UseHttpsRedirection();
