@@ -1,0 +1,19 @@
+import apiClient from './client.ts'
+import type { ChapterDto } from '../types/index.ts'
+
+export const chaptersApi = {
+  getByEra: async (eraId: number): Promise<ChapterDto[]> => {
+    const response = await apiClient.get<ChapterDto[]>(`/api/chapters/era/${eraId}`)
+    return response.data
+  },
+
+  getById: async (id: number): Promise<ChapterDto> => {
+    const response = await apiClient.get<ChapterDto>(`/api/chapters/${id}`)
+    return response.data
+  },
+
+  completeScroll: async (chapterId: number): Promise<boolean> => {
+    const response = await apiClient.post<boolean>(`/api/chapters/${chapterId}/complete-scroll`)
+    return response.data
+  },
+}
