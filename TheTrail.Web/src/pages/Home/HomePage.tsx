@@ -1,3 +1,4 @@
+import Navbar from '../../components/Navbar.tsx'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -97,6 +98,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-stone-950">
+        <Navbar style="drawer" />
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -104,11 +106,31 @@ export default function HomePage() {
         transition={{ duration: 1.5 }}
         className="relative h-screen flex flex-col items-center justify-center text-center px-4"
       >
+        {/* Background map */}
+        <div className="absolute inset-0">
+          <img
+            src="/images/HeroMap.jpg"
+            alt="Ancient map"
+            className="w-full h-full object-cover"
+            style={{ objectPosition: '50% 40%' }}
+          />
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60" />
+          {/* Edge vignette */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.8) 100%)'
+            }}
+          />
+        </div>
+
+        {/* Content */}
         <motion.p
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 1 }}
-          className="text-stone-500 text-sm tracking-[0.3em] uppercase mb-6"
+          className="relative z-10 text-amber-200/60 text-sm tracking-[0.3em] uppercase mb-6"
         >
           An interactive history encyclopedia
         </motion.p>
@@ -117,7 +139,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 1 }}
-          className="text-6xl md:text-8xl font-bold text-stone-100 mb-6 tracking-tight"
+          className="relative z-10 text-6xl md:text-8xl font-bold text-amber-50 mb-6 tracking-tight"
         >
           The Trail
         </motion.h1>
@@ -126,7 +148,7 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 1 }}
-          className="text-stone-400 text-lg md:text-xl mb-12 tracking-wide"
+          className="relative z-10 text-amber-200/70 text-lg md:text-xl mb-12 tracking-wide"
         >
           Follow the trail of human history
         </motion.p>
@@ -140,7 +162,7 @@ export default function HomePage() {
           onClick={() => {
             document.getElementById('eras')?.scrollIntoView({ behavior: 'smooth' })
           }}
-          className="px-8 py-4 border border-stone-600 text-stone-300 tracking-widest uppercase text-sm hover:border-stone-400 hover:text-stone-100 transition-all duration-300"
+          className="relative z-10 px-8 py-4 border border-amber-200/40 text-amber-200/80 tracking-widest uppercase text-sm hover:border-amber-200/80 hover:text-amber-50 transition-all duration-300"
         >
           Begin Your Journey
         </motion.button>
@@ -148,7 +170,7 @@ export default function HomePage() {
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-8 text-stone-600 text-xs tracking-widest uppercase"
+          className="absolute bottom-8 z-10 text-amber-200/40 text-xs tracking-widest uppercase"
         >
           Scroll to explore
         </motion.div>
@@ -160,13 +182,13 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center text-stone-500 text-xs tracking-[0.4em] uppercase py-16"
+          className="text-center text-stone-400 text-base tracking-[0.6em] uppercase py-8 border-t border-stone-800"
         >
           Choose Your Era
         </motion.h2>
 
-        <div className="flex h-150 overflow-hidden">
-          {eras.map((era, index) => {
+        <div className="flex overflow-hidden" style={{ height: '700px' }}>
+            {eras.map((era) => {
             const theme = getTheme(era.colorTheme)
             const isActive = activeEra === era.id
             const isAnyActive = activeEra !== null
@@ -182,7 +204,6 @@ export default function HomePage() {
                 onHoverEnd={() => setActiveEra(null)}
                 onClick={() => navigate(`/eras/${era.id}`)}
                 className="relative overflow-hidden cursor-pointer flex-1"
-
               >
                 {/* Background */}
                 {theme.image ? (
@@ -222,7 +243,7 @@ export default function HomePage() {
                         writingMode: isActive ? 'horizontal-tb' : 'vertical-rl',
                         fontSize: isActive ? '2rem' : '1rem'
                       }}
-                      transition={{ duration: 0.4 }}
+                      transition={{ duration: 0.5 }}
                       className={`font-bold mb-2 ${theme.text}`}
                       style={{
                         writingMode: isActive ? 'horizontal-tb' : 'vertical-rl',
