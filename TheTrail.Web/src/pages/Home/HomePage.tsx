@@ -22,31 +22,36 @@ const eraThemes: Record<string, {
     bg: 'from-yellow-950 via-amber-900 to-stone-900',
     accent: 'text-yellow-400',
     text: 'text-amber-100',
-    description: 'Empires of gold and sand'
+    description: 'Empires of gold and sand',
+    image: '/images/eras/AncientEra.png'
   },
   medieval: {
     bg: 'from-slate-950 via-red-900 to-slate-900',
     accent: 'text-red-400',
     text: 'text-slate-200',
-    description: 'Iron, faith and fire'
+    description: 'Iron, faith and fire',
+    image: '/images/eras/MedievalEra.png'
   },
   renaissance: {
     bg: 'from-indigo-950 via-purple-900 to-slate-900',
     accent: 'text-purple-300',
     text: 'text-indigo-100',
-    description: 'The rebirth of human thought'
+    description: 'The rebirth of human thought',
+    image: '/images/eras/RenaissanceEra.png'
   },
   modern: {
     bg: 'from-zinc-900 via-zinc-800 to-stone-900',
     accent: 'text-zinc-300',
     text: 'text-zinc-100',
-    description: 'The world remade'
+    description: 'The world remade',
+    image: '/images/eras/ModernEra.png'
   },
   digital: {
     bg: 'from-slate-950 via-blue-950 to-slate-900',
     accent: 'text-blue-400',
     text: 'text-blue-100',
-    description: 'The age of information'
+    description: 'The age of information',
+    image: '/images/eras/DigitalEra.png'
   },
 }
 
@@ -177,13 +182,7 @@ export default function HomePage() {
                 onHoverEnd={() => setActiveEra(null)}
                 onClick={() => navigate(`/eras/${era.id}`)}
                 className="relative overflow-hidden cursor-pointer flex-1"
-                style={{
-                  clipPath: index === 0
-                    ? 'polygon(0 0, calc(100% - 30px) 0, 100% 100%, 0 100%)'
-                    : index === eras.length - 1
-                    ? 'polygon(30px 0, 100% 0, 100% 100%, 0 100%)'
-                    : 'polygon(30px 0, calc(100% - 30px) 0, 100% 100%, 0 100%)'
-                }}
+
               >
                 {/* Background */}
                 {theme.image ? (
