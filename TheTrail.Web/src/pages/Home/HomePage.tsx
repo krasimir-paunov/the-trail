@@ -1,4 +1,3 @@
-import Navbar from '../../components/Navbar.tsx'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -98,7 +97,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-stone-950">
-        <Navbar style="drawer" />
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0 }}

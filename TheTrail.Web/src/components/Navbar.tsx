@@ -207,7 +207,7 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                         The Trail
                       </span>
                       <span className="text-amber-200/40 text-xs tracking-[0.2em] uppercase">
-                        Follow the trail of human history
+                        Follow the trail
                       </span>
                     </div>
                     <button
@@ -250,7 +250,7 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   >
                     {isAuthenticated ? (
                       <>
-                        <p className="text-stone-500 text-xs tracking-widest uppercase">
+                        <p className="text-amber-200/60 text-m tracking-wide">
                           {user?.displayName}
                         </p>
                         <button
