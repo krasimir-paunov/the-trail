@@ -1,1 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+* {
+  font-family: 'EB Garamond', Georgia, serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Cinzel', serif;
+}
