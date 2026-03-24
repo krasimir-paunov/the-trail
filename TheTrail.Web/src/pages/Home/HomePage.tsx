@@ -279,6 +279,67 @@ export default function HomePage() {
           })}
         </div>
       </div>
+            {/* How It Works */}
+<div className="max-w-4xl mx-auto px-4 py-24">
+  <motion.p
+    initial={{ opacity: 0 }}
+    whileInView={{ opacity: 1 }}
+    viewport={{ once: true }}
+    className="text-center text-amber-200/40 text-xs tracking-[0.4em] uppercase mb-4"
+  >
+    The Journey
+  </motion.p>
+
+  <motion.h2
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ delay: 0.1, duration: 0.9 }}
+    className="text-center text-3xl font-bold text-amber-50 mb-16"
+  >
+    How The Trail Works
+  </motion.h2>
+
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+    {[
+      {
+        number: 'I',
+        title: 'Choose Your Era',
+        description: 'Select from six distinct eras of human history. Each era is a world unto itself — visually unique, historically rich.'
+      },
+      {
+        number: 'II',
+        title: 'Follow The Trail',
+        description: 'Explore chapters within each era. Read the stories, study the events, absorb the knowledge at your own pace.'
+      },
+      {
+        number: 'III',
+        title: 'Earn Your Place',
+        description: 'Complete quizzes to earn collectibles and era badges. Prove your knowledge. Build your trophy cabinet.'
+      },
+    ].map((step, i) => (
+      <motion.div
+        key={step.number}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: i * 0.2, duration: 0.9 }}
+        className="text-center"
+      >
+        <p className="text-amber-200/30 text-5xl font-bold mb-6">
+          {step.number}
+        </p>
+        <div className="w-px h-12 bg-stone-800 mx-auto mb-6" />
+        <h3 className="text-amber-50 text-lg font-bold mb-4 tracking-wide">
+          {step.title}
+        </h3>
+        <p className="text-stone-500 text-base leading-relaxed">
+          {step.description}
+        </p>
+      </motion.div>
+    ))}
+  </div>
+</div>
     </div>
   )
 }
