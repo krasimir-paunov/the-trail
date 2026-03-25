@@ -32,6 +32,7 @@ namespace TheTrail.Api
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IEraService, EraService>();
             builder.Services.AddScoped<IChapterService, ChapterService>();
+            builder.Services.AddScoped<IProfileService, ProfileService>();
 
             // CORS — allows React dev server to call the API
             builder.Services.AddCors(options =>

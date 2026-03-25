@@ -10,5 +10,9 @@ namespace TheTrail.Services.Core.Interfaces
         Task<ChapterDto?> UpdateAsync(int id, UpdateChapterDto dto);
         Task<bool> DeleteAsync(int id);
         Task<bool> CompleteScrollAsync(int chapterId, string userId);
+        Task<QuizDto?> GetQuizAsync(int chapterId);
+        Task<string?> GetContentAsync(int chapterId);
+        Task<bool> CheckAnswerAsync(int questionId, string answer);
+        Task SaveQuizResultAsync(int chapterId, string userId, bool passed);
     }
 }

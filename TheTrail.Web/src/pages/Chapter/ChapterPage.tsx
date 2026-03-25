@@ -135,15 +135,44 @@ export default function ChapterPage() {
 
   const getOptionClass = (option: string) => {
     if (!selectedAnswer) {
-      return 'border-stone-700 text-stone-300 hover:border-amber-200/50 hover:text-amber-200 cursor-pointer'
+      return 'cursor-pointer transition-all duration-300'
     }
     if (answeredCorrectly && option === selectedAnswer) {
-      return 'border-green-500 text-green-400 bg-green-500/10'
+      return 'transition-all duration-300'
     }
     if (!answeredCorrectly && option === selectedAnswer) {
-      return 'border-red-500 text-red-400 bg-red-500/10'
+      return 'transition-all duration-300'
     }
-    return 'border-stone-800 text-stone-600'
+    return 'transition-all duration-300'
+  }
+
+  const getOptionStyle = (option: string) => {
+    if (!selectedAnswer) {
+      return {
+        border: '1px solid #c4a47a',
+        color: 'var(--ink-medium)',
+        background: 'var(--parchment-light)',
+      }
+    }
+    if (answeredCorrectly && option === selectedAnswer) {
+      return {
+        border: '1px solid #4ade80',
+        color: '#4ade80',
+        background: 'rgba(74,222,128,0.08)',
+      }
+    }
+    if (!answeredCorrectly && option === selectedAnswer) {
+      return {
+        border: '1px solid #f87171',
+        color: '#f87171',
+        background: 'rgba(248,113,113,0.08)',
+      }
+    }
+    return {
+      border: '1px solid #c4a47a40',
+      color: 'var(--ink-muted)',
+      background: 'var(--parchment-mid)',
+    }
   }
 
   const resetQuiz = () => {
@@ -157,11 +186,13 @@ export default function ChapterPage() {
 
   if (loading || !chapter) {
     return (
-      <div className="min-h-screen bg-[#1e1a12] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: 'var(--hero-dark)' }}>
         <motion.div
           animate={{ opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-amber-200/50 text-xl tracking-widest uppercase"
+          className="text-xl tracking-widest uppercase"
+          style={{ color: 'var(--accent-amber)' }}
         >
           Opening the scroll...
         </motion.div>
@@ -172,36 +203,42 @@ export default function ChapterPage() {
   const passed = quizPassed || Math.round((score / quizQuestions.length) * 100) >= 60
 
   return (
-    <div className="min-h-screen bg-[#1e1a12]">
+    <div className="min-h-screen" style={{ background: 'var(--hero-dark)' }}>
+
       {/* Reading progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-0.5 bg-stone-900 z-40">
+      <div className="fixed top-0 left-0 right-0 h-0.5 z-40"
+        style={{ background: 'var(--parchment-border)' }}>
         <motion.div
-          className="h-full bg-amber-400/70"
-          style={{ width: `${scrollProgress}%` }}
+          className="h-full"
+          style={{ width: `${scrollProgress}%`, background: 'var(--accent-amber)' }}
           transition={{ duration: 0.1 }}
         />
       </div>
 
-      {/* Chapter Hero */}
-      <div className="relative h-[30vh] flex flex-col items-center justify-end pb-10 px-4">
-        <div className="absolute inset-0 bg-linear-to-b from-stone-900 to-[#1e1a12]" />
-        <div className="absolute inset-0 bg-linear-to-t from-[#1e1a12] via-transparent to-transparent" />
+      {/* Chapter Hero — dark cinematic */}
+      <div className="relative h-[35vh] flex flex-col items-center justify-end pb-12 px-4">
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, #1a0f05, var(--hero-dark))' }} />
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, var(--hero-dark), transparent)' }} />
 
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => navigate(-1)}
-          className="absolute top-8 left-8 text-stone-500 hover:text-amber-200 transition-colors text-sm tracking-widest uppercase cursor-pointer"
+          className="absolute top-8 left-8 text-sm tracking-widest uppercase cursor-pointer transition-colors duration-300 hover:opacity-100"
+          style={{ color: 'var(--ink-muted)', opacity: 0.7 }}
         >
           ← Back
         </motion.button>
 
-        <div className="relative z-10 text-center max-w-3xl">
+        <div className="relative z-10 text-center max-w-4xl">
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-amber-300/50 text-xs tracking-[0.4em] uppercase mb-3"
+            className="text-sm tracking-[0.4em] uppercase mb-4"
+            style={{ color: 'var(--accent-amber)', opacity: 0.7 }}
           >
             {chapter.estimatedMinutes} min read
           </motion.p>
@@ -209,7 +246,8 @@ export default function ChapterPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-4xl md:text-6xl font-bold text-amber-50 mb-4"
+            className="text-5xl md:text-7xl font-bold mb-4"
+            style={{ color: 'var(--parchment-light)', fontFamily: "'Cinzel', serif" }}
           >
             {chapter.title}
           </motion.h1>
@@ -217,252 +255,315 @@ export default function ChapterPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-stone-400 text-lg"
+            className="text-xl"
+            style={{ color: 'var(--parchment-dark)' }}
           >
             {chapter.subtitle}
           </motion.p>
         </div>
       </div>
 
-      {/* Two column layout */}
-      <div className="flex gap-0 py-20 max-w-6xl mx-auto px-4">
+      {/* Parchment content area */}
+      <div className="parchment">
+        <div className="flex gap-0 max-w-6xl mx-auto px-4 py-20">
 
-        {/* Sticky left sidebar */}
-        <div className="hidden lg:flex flex-col w-52 shrink-0 pr-8">
-          <div className="sticky top-24 flex flex-col gap-6">
-            <div>
-              <p className="text-amber-200/30 text-xs tracking-[0.3em] uppercase mb-1">
-                Chapter
-              </p>
-              <p className="text-amber-200/60 text-sm font-bold leading-snug">
-                {chapter.title}
-              </p>
-            </div>
+          {/* Sticky left sidebar */}
+          <div className="hidden lg:flex flex-col w-56 shrink-0 pr-10">
+            <div className="sticky top-24 flex flex-col gap-8">
 
-            <div>
-              <p className="text-amber-200/30 text-xs tracking-[0.3em] uppercase mb-2">
-                Reading
-              </p>
-              <p className="text-amber-200/60 text-3xl font-bold mb-3">
-                {Math.round(scrollProgress)}%
-              </p>
-              <div className="w-px h-32 bg-stone-800 relative ml-1">
-                <motion.div
-                  className="w-px bg-amber-400/60 absolute top-0 left-0"
-                  style={{ height: `${scrollProgress}%` }}
-                  transition={{ duration: 0.1 }}
-                />
+              <div>
+                <p className="text-xs tracking-[0.3em] uppercase mb-2"
+                  style={{ color: 'var(--ink-muted)' }}>
+                  Chapter
+                </p>
+                <p className="text-base font-bold leading-snug"
+                  style={{ color: 'var(--ink-dark)', fontFamily: "'Cinzel', serif" }}>
+                  {chapter.title}
+                </p>
               </div>
-            </div>
 
-            <div>
-              <p className="text-amber-200/30 text-xs tracking-[0.3em] uppercase mb-3">
-                Progress
-              </p>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full border transition-colors duration-500 ${
-                    scrollCompleted
-                      ? 'bg-amber-200 border-amber-200'
-                      : 'border-stone-600'
-                  }`} />
-                  <p className="text-stone-500 text-xs tracking-wide">Read</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full border transition-colors duration-500 ${
-                    quizPassed
-                      ? 'bg-yellow-400 border-yellow-400'
-                      : 'border-stone-600'
-                  }`} />
-                  <p className="text-stone-500 text-xs tracking-wide">Quiz</p>
+              <div>
+                <p className="text-xs tracking-[0.3em] uppercase mb-2"
+                  style={{ color: 'var(--ink-muted)' }}>
+                  Reading
+                </p>
+                <p className="text-4xl font-bold mb-4"
+                  style={{ color: 'var(--ink-dark)', fontFamily: "'Cinzel', serif" }}>
+                  {Math.round(scrollProgress)}%
+                </p>
+                <div className="w-px h-36 relative ml-1"
+                  style={{ background: 'var(--parchment-border)' }}>
+                  <motion.div
+                    className="w-px absolute top-0 left-0"
+                    style={{
+                      height: `${scrollProgress}%`,
+                      background: 'var(--accent-amber)'
+                    }}
+                    transition={{ duration: 0.1 }}
+                  />
                 </div>
               </div>
+
+              <div>
+                <p className="text-xs tracking-[0.3em] uppercase mb-4"
+                  style={{ color: 'var(--ink-muted)' }}>
+                  Progress
+                </p>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full border-2 transition-colors duration-500 ${
+                      scrollCompleted ? '' : ''
+                    }`} style={{
+                      background: scrollCompleted ? 'var(--accent-amber)' : 'transparent',
+                      borderColor: scrollCompleted ? 'var(--accent-amber)' : 'var(--parchment-border)'
+                    }} />
+                    <p className="text-sm" style={{ color: 'var(--ink-light)' }}>Read</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full border-2 transition-colors duration-500"
+                      style={{
+                        background: quizPassed ? '#eab308' : 'transparent',
+                        borderColor: quizPassed ? '#eab308' : 'var(--parchment-border)'
+                      }} />
+                    <p className="text-sm" style={{ color: 'var(--ink-light)' }}>Quiz</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
 
-        {/* Main content */}
-        <div className="flex-1 border-l border-amber-200/10 pl-8">
-          {blocks.length === 0 ? (
-            <p className="text-stone-500 text-center py-16">Content coming soon.</p>
-          ) : (
-            <div className="flex flex-col gap-12">
-              {blocks.map((block, i) => (
-                <>
-                  {i > 0 && i % 3 === 0 && (
-                    <motion.div
-                      key={`divider-${i}`}
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      className="flex items-center justify-center gap-4 py-2"
-                    >
-                      <div className="h-px flex-1 bg-amber-200/10" />
-                      <span className="text-amber-200/20 text-xs">✦</span>
-                      <div className="h-px flex-1 bg-amber-200/10" />
-                    </motion.div>
-                  )}
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7 }}
-                  >
-                    {block.type === 'paragraph' && (
-                      <p className={`text-stone-200 text-xl leading-[1.9] ${i === 0 ? 'drop-cap' : ''}`}>
-                        {block.text}
-                      </p>
+          {/* Main content */}
+          <div className="flex-1 pl-10"
+            style={{ borderLeft: '1px solid var(--parchment-border)' }}>
+
+            {blocks.length === 0 ? (
+              <p className="text-center py-16 text-lg"
+                style={{ color: 'var(--ink-muted)' }}>
+                Content coming soon.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-12">
+                {blocks.map((block, i) => (
+                  <>
+                    {i > 0 && i % 3 === 0 && (
+                      <motion.div
+                        key={`divider-${i}`}
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="flex items-center justify-center gap-6 py-2"
+                      >
+                        <div className="h-px flex-1"
+                          style={{ background: 'var(--parchment-border)' }} />
+                        <span className="text-sm"
+                          style={{ color: 'var(--accent-amber-dim)' }}>✦</span>
+                        <div className="h-px flex-1"
+                          style={{ background: 'var(--parchment-border)' }} />
+                      </motion.div>
                     )}
-
-                    {block.type === 'fact' && (
-                      <div className="bg-amber-950/30 border border-amber-200/20 px-8 py-6">
-                        <p className="text-amber-300/80 text-xs tracking-[0.3em] uppercase mb-3">
-                          {block.title}
-                        </p>
-                        <p className="text-amber-100 text-lg leading-relaxed">
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.7 }}
+                    >
+                      {block.type === 'paragraph' && (
+                        <p
+                          className={`text-xl leading-[1.9] ${i === 0 ? 'drop-cap' : ''}`}
+                          style={{
+                            color: 'var(--ink-dark)',
+                            fontFamily: "'EB Garamond', serif"
+                          }}
+                        >
                           {block.text}
                         </p>
-                      </div>
-                    )}
+                      )}
 
-                    {block.type === 'image' && (
-                      <div>
-                        <img
-                          src={block.url}
-                          alt={block.caption}
-                          className="w-full object-cover mb-4"
-                        />
-                        <p className="text-stone-400 text-base text-center italic mt-3">
-                          {block.caption}
-                        </p>
-                      </div>
-                    )}
+                      {block.type === 'fact' && (
+                        <div className="px-8 py-6"
+                          style={{
+                            background: 'var(--parchment-mid)',
+                            borderLeft: '3px solid var(--accent-amber)',
+                          }}>
+                          <p className="text-xs tracking-[0.3em] uppercase mb-3"
+                            style={{ color: 'var(--accent-amber)' }}>
+                            {block.title}
+                          </p>
+                          <p className="text-xl leading-relaxed"
+                            style={{
+                              color: 'var(--ink-medium)',
+                              fontFamily: "'EB Garamond', serif"
+                            }}>
+                            {block.text}
+                          </p>
+                        </div>
+                      )}
 
-                    {block.type === 'timeline' && (
-                      <div className="border-l-2 border-amber-200/20 pl-8 py-4">
-                        <p className="text-amber-300/70 text-sm tracking-widest uppercase font-bold mb-2">
-                          {block.date}
-                        </p>
-                        <p className="text-stone-200 text-lg leading-relaxed">
-                          {block.evnt}
-                        </p>
-                      </div>
-                    )}
+                      {block.type === 'image' && (
+                        <div>
+                          <img
+                            src={block.url}
+                            alt={block.caption}
+                            className="w-full object-cover mb-4"
+                          />
+                          <p className="text-base text-center italic mt-3"
+                            style={{ color: 'var(--ink-muted)', fontFamily: "'EB Garamond', serif" }}>
+                            {block.caption}
+                          </p>
+                        </div>
+                      )}
 
-                    {block.type === 'quote' && (
-                      <div className="border-t border-b border-amber-200/20 py-10 my-4 text-center">
-                        <p className="text-amber-100/90 text-2xl md:text-3xl italic leading-relaxed mb-4">
-                          "{block.text}"
-                        </p>
-                        <p className="text-stone-500 text-xs tracking-[0.3em] uppercase">
-                          — {block.source}
-                        </p>
-                      </div>
+                      {block.type === 'timeline' && (
+                        <div className="pl-8 py-4"
+                          style={{ borderLeft: '2px solid var(--parchment-border)' }}>
+                          <p className="text-sm tracking-widest uppercase font-bold mb-3"
+                            style={{ color: 'var(--accent-amber)' }}>
+                            {block.date}
+                          </p>
+                          <p className="text-xl leading-relaxed"
+                            style={{
+                              color: 'var(--ink-dark)',
+                              fontFamily: "'EB Garamond', serif"
+                            }}>
+                            {block.evnt}
+                          </p>
+                        </div>
+                      )}
+
+                      {block.type === 'quote' && (
+                        <div className="py-10 my-4 text-center"
+                          style={{
+                            borderTop: '1px solid var(--parchment-border)',
+                            borderBottom: '1px solid var(--parchment-border)'
+                          }}>
+                          <p className="text-2xl md:text-3xl italic leading-relaxed mb-4"
+                            style={{
+                              color: 'var(--ink-medium)',
+                              fontFamily: "'EB Garamond', serif"
+                            }}>
+                            "{block.text}"
+                          </p>
+                          <p className="text-sm tracking-[0.3em] uppercase"
+                            style={{ color: 'var(--ink-muted)' }}>
+                            — {block.source}
+                          </p>
+                        </div>
+                      )}
+                    </motion.div>
+                  </>
+                ))}
+              </div>
+            )}
+
+            {/* Scroll completion */}
+            <div ref={bottomRef} className="mt-24">
+              <AnimatePresence>
+                {scrollCompleted && !showQuiz && !quizPassed && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="text-center pt-16"
+                    style={{ borderTop: '1px solid var(--parchment-border)' }}
+                  >
+                    <motion.p
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="text-sm tracking-[0.4em] uppercase mb-4"
+                      style={{ color: 'var(--accent-amber)' }}
+                    >
+                      You have walked this trail
+                    </motion.p>
+                    <p className="text-lg mb-8"
+                      style={{ color: 'var(--ink-light)', fontFamily: "'EB Garamond', serif" }}>
+                      {chapter.hasQuiz
+                        ? 'Prove your knowledge to earn your reward.'
+                        : 'Chapter complete.'}
+                    </p>
+                    {chapter.hasQuiz && quizQuestions.length > 0 && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowQuiz(true)}
+                        className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+                        style={{
+                          border: '1px solid var(--accent-amber-dim)',
+                          color: 'var(--ink-dark)',
+                          background: 'var(--parchment-mid)',
+                          fontFamily: "'Cinzel', serif"
+                        }}
+                      >
+                        Test Your Knowledge →
+                      </motion.button>
                     )}
                   </motion.div>
-                </>
-              ))}
-            </div>
-          )}
+                )}
 
-          {/* Scroll completion */}
-          <div ref={bottomRef} className="mt-24">
-            <AnimatePresence>
-              {scrollCompleted && !showQuiz && !quizPassed && (
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8 }}
-                  className="text-center border-t border-amber-200/10 pt-16"
-                >
-                  <motion.p
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                    className="text-amber-200/50 text-xs tracking-[0.4em] uppercase mb-4"
+                {quizPassed && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-center pt-16"
+                    style={{ borderTop: '1px solid var(--parchment-border)' }}
                   >
-                    You have walked this trail
-                  </motion.p>
-                  <p className="text-stone-400 text-sm mb-8">
-                    {chapter.hasQuiz
-                      ? 'Prove your knowledge to earn your reward.'
-                      : 'Chapter complete.'}
-                  </p>
-                  {chapter.hasQuiz && quizQuestions.length > 0 && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowQuiz(true)}
-                      className="px-8 py-4 border border-amber-200/30 text-amber-200/80 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-50 transition-all duration-300 cursor-pointer"
-                    >
-                      Test Your Knowledge →
-                    </motion.button>
-                  )}
-                </motion.div>
-              )}
-
-              {quizPassed && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center border-t border-amber-200/10 pt-16"
-                >
-                  <p className="text-yellow-400/70 text-xs tracking-[0.4em] uppercase mb-2">
-                    ★ Chapter Complete
-                  </p>
-                  <p className="text-stone-500 text-sm">
-                    You have mastered this chapter.
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <p className="text-sm tracking-[0.4em] uppercase mb-3"
+                      style={{ color: '#eab308' }}>
+                      ★ Chapter Complete
+                    </p>
+                    <p className="text-lg"
+                      style={{ color: 'var(--ink-light)', fontFamily: "'EB Garamond', serif" }}>
+                      You have mastered this chapter.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Quiz overlay */}
+      {/* Quiz overlay — dark cinematic */}
       <AnimatePresence>
         {showQuiz && !quizComplete && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-stone-950/95 backdrop-blur-sm flex items-center justify-center px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-sm"
+            style={{ background: 'rgba(13,10,6,0.97)' }}
           >
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              onClick={() => {
-                setShowQuiz(false)
-                resetQuiz()
-              }}
-              className="absolute top-6 right-6 text-stone-500 hover:text-amber-200 transition-colors text-sm tracking-widest uppercase cursor-pointer"
+              onClick={() => { setShowQuiz(false); resetQuiz() }}
+              className="absolute top-6 right-6 text-sm tracking-widest uppercase cursor-pointer transition-colors duration-300"
+              style={{ color: 'var(--ink-muted)' }}
             >
               ✕ Close
             </motion.button>
 
             <div className="w-full max-w-2xl">
-              <div className="flex items-center justify-between mb-8">
-                <p className="text-stone-500 text-xs tracking-widest uppercase">
+              <div className="flex items-center justify-between mb-10">
+                <p className="text-sm tracking-widest uppercase"
+                  style={{ color: 'var(--ink-muted)' }}>
                   Question {currentQuestion + 1} of {quizQuestions.length}
                 </p>
                 <div className="flex gap-2">
                   {quizQuestions.map((_, i) => (
                     <div
                       key={i}
-                      className={`w-2 h-2 rounded-full transition-all duration-500 ${
-                        i < currentQuestion
-                          ? answers[i] === true
-                            ? 'bg-green-400'
-                            : answers[i] === false
-                            ? 'bg-red-400'
-                            : 'bg-stone-600'
+                      className="w-2.5 h-2.5 rounded-full transition-all duration-500"
+                      style={{
+                        background: i < currentQuestion
+                          ? answers[i] === true ? '#4ade80' : '#f87171'
                           : i === currentQuestion
-                          ? 'bg-amber-200/60 ring-1 ring-amber-200/30'
-                          : 'bg-stone-700'
-                      }`}
+                          ? 'var(--accent-amber)'
+                          : 'var(--parchment-border)'
+                      }}
                     />
                   ))}
                 </div>
@@ -476,7 +577,11 @@ export default function ChapterPage() {
                   exit={{ opacity: 0, x: -30 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <h2 className="text-2xl md:text-3xl font-bold text-amber-50 mb-10 leading-relaxed">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-12 leading-relaxed"
+                    style={{
+                      color: 'var(--parchment-light)',
+                      fontFamily: "'Cinzel', serif"
+                    }}>
                     {quizQuestions[currentQuestion]?.text}
                   </h2>
 
@@ -489,12 +594,15 @@ export default function ChapterPage() {
                           whileHover={!selectedAnswer ? { scale: 1.01 } : {}}
                           whileTap={!selectedAnswer ? { scale: 0.99 } : {}}
                           onClick={() => handleAnswer(option)}
-                          className={`flex items-center gap-4 p-4 border text-left transition-all duration-300 ${getOptionClass(option)}`}
+                          className={`flex items-center gap-4 p-5 text-left ${getOptionClass(option)}`}
+                          style={getOptionStyle(option)}
                         >
-                          <span className="text-xs tracking-widest opacity-50 shrink-0">
+                          <span className="text-sm tracking-widest shrink-0"
+                            style={{ color: 'var(--accent-amber-dim)', fontFamily: "'Cinzel', serif" }}>
                             {option}
                           </span>
-                          <span className="text-base">
+                          <span className="text-lg"
+                            style={{ fontFamily: "'EB Garamond', serif" }}>
                             {quizQuestions[currentQuestion]?.[optionKey] as string}
                           </span>
                         </motion.button>
@@ -506,9 +614,8 @@ export default function ChapterPage() {
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className={`text-center mt-6 text-sm tracking-widest uppercase ${
-                        answeredCorrectly ? 'text-green-400' : 'text-red-400'
-                      }`}
+                      className="text-center mt-6 text-base tracking-widest uppercase"
+                      style={{ color: answeredCorrectly ? '#4ade80' : '#f87171' }}
                     >
                       {answeredCorrectly ? 'Correct' : 'Incorrect'}
                     </motion.p>
@@ -527,7 +634,8 @@ export default function ChapterPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-stone-950/95 backdrop-blur-sm flex items-center justify-center px-4"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            style={{ background: 'rgba(13,10,6,0.97)' }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -535,16 +643,29 @@ export default function ChapterPage() {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="text-center max-w-md"
             >
-              <p className="text-stone-500 text-xs tracking-[0.4em] uppercase mb-6">
+              <p className="text-sm tracking-[0.4em] uppercase mb-8"
+                style={{ color: 'var(--ink-muted)' }}>
                 Results
               </p>
-              <p className={`text-7xl font-bold mb-4 ${passed ? 'text-amber-200' : 'text-stone-400'}`}>
+              <p className="text-8xl font-bold mb-4"
+                style={{
+                  color: passed ? 'var(--accent-amber)' : 'var(--ink-muted)',
+                  fontFamily: "'Cinzel', serif"
+                }}>
                 {score}/{quizQuestions.length}
               </p>
-              <p className={`text-lg mb-2 ${passed ? 'text-amber-100' : 'text-stone-400'}`}>
+              <p className="text-2xl mb-3"
+                style={{
+                  color: passed ? 'var(--parchment-light)' : 'var(--ink-muted)',
+                  fontFamily: "'Cinzel', serif"
+                }}>
                 {passed ? 'Excellent' : 'Not quite'}
               </p>
-              <p className="text-stone-500 text-sm mb-12">
+              <p className="text-lg mb-16"
+                style={{
+                  color: 'var(--ink-muted)',
+                  fontFamily: "'EB Garamond', serif"
+                }}>
                 {passed
                   ? 'You have proven your knowledge of this era.'
                   : 'The trail is long. Study and try again.'}
@@ -555,7 +676,12 @@ export default function ChapterPage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     onClick={resetQuiz}
-                    className="px-6 py-3 border border-stone-700 text-stone-400 text-sm tracking-widest uppercase hover:border-stone-500 hover:text-stone-200 transition-all cursor-pointer"
+                    className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                    style={{
+                      border: '1px solid var(--parchment-border)',
+                      color: 'var(--ink-muted)',
+                      background: 'transparent'
+                    }}
                   >
                     Try Again
                   </motion.button>
@@ -563,7 +689,12 @@ export default function ChapterPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   onClick={() => navigate(-1)}
-                  className="px-6 py-3 border border-amber-200/30 text-amber-200/70 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-50 transition-all cursor-pointer"
+                  className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                  style={{
+                    border: '1px solid var(--accent-amber-dim)',
+                    color: 'var(--accent-amber)',
+                    background: 'transparent'
+                  }}
                 >
                   Return to Era
                 </motion.button>
@@ -582,7 +713,7 @@ export default function ChapterPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-xl"
             style={{
-              background: 'radial-gradient(ellipse at center, rgba(180,120,30,0.15) 0%, rgba(0,0,0,0.96) 60%)'
+              background: 'radial-gradient(ellipse at center, rgba(180,120,30,0.15) 0%, rgba(13,10,6,0.97) 60%)'
             }}
           >
             <div className="text-center max-w-sm">
@@ -590,7 +721,8 @@ export default function ChapterPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-amber-200/50 text-xs tracking-[0.5em] uppercase mb-8"
+                className="text-sm tracking-[0.5em] uppercase mb-8"
+                style={{ color: 'var(--accent-amber)', opacity: 0.7 }}
               >
                 Reward Unlocked
               </motion.p>
@@ -604,15 +736,19 @@ export default function ChapterPage() {
                 <motion.div
                   animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.15, 1] }}
                   transition={{ duration: 2.5, repeat: Infinity }}
-                  className="absolute inset-0 rounded-full bg-amber-400/20 blur-2xl"
+                  className="absolute inset-0 rounded-full blur-2xl"
+                  style={{ background: 'rgba(212,168,83,0.25)' }}
                 />
-                <div className="relative w-64 h-64 rounded-full border-2 border-amber-200/40 overflow-hidden">
+                <div className="relative w-64 h-64 rounded-full overflow-hidden"
+                  style={{
+                    border: '2px solid var(--accent-amber)',
+                    boxShadow: '0 0 60px rgba(212,168,83,0.3)'
+                  }}>
                   <img
                     src="/images/collectibles/trex.jpg"
                     alt="T-Rex Collectible"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 rounded-full border-4 border-amber-400/20" />
                 </div>
               </motion.div>
 
@@ -620,13 +756,26 @@ export default function ChapterPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 0.6 }}
-                className="bg-black/60 backdrop-blur-sm px-8 py-6 rounded-2xl border border-amber-200/10"
+                className="px-8 py-6"
+                style={{
+                  background: 'rgba(13,10,6,0.8)',
+                  border: '1px solid var(--accent-amber-dim)',
+                  backdropFilter: 'blur(8px)'
+                }}
               >
-                <p className="text-amber-50 text-2xl font-bold mb-2">T-Rex</p>
-                <p className="text-stone-400/60 text-xs tracking-[0.3em] uppercase mb-4">
-                    Common Collectible
+                <p className="text-2xl font-bold mb-2"
+                  style={{ color: 'var(--parchment-light)', fontFamily: "'Cinzel', serif" }}>
+                  T-Rex
                 </p>
-                <p className="text-stone-300 text-sm mb-8 leading-relaxed">
+                <p className="text-xs tracking-[0.3em] uppercase mb-4"
+                  style={{ color: 'var(--ink-muted)' }}>
+                  Common Collectible
+                </p>
+                <p className="text-base mb-8 leading-relaxed"
+                  style={{
+                    color: 'var(--parchment-dark)',
+                    fontFamily: "'EB Garamond', serif"
+                  }}>
                   The apex predator of the prehistoric era. Earned by those who walked the trail and proved their knowledge.
                 </p>
 
@@ -636,7 +785,13 @@ export default function ChapterPage() {
                   transition={{ delay: 1.5 }}
                   whileHover={{ scale: 1.05 }}
                   onClick={() => navigate(-1)}
-                  className="px-8 py-3 border border-amber-200/40 text-amber-200/80 text-sm tracking-widest uppercase hover:border-amber-200/70 hover:text-amber-50 transition-all cursor-pointer"
+                  className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                  style={{
+                    border: '1px solid var(--accent-amber)',
+                    color: 'var(--accent-amber)',
+                    background: 'transparent',
+                    fontFamily: "'Cinzel', serif"
+                  }}
                 >
                   Continue The Trail →
                 </motion.button>

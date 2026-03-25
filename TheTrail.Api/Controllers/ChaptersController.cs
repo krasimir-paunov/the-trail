@@ -104,5 +104,45 @@ namespace TheTrail.Api.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("{id}/quiz")]
+        public async Task<ActionResult<QuizDto>> GetQuiz(int id)
+        {
+            QuizDto? quiz = await _chapterService.GetQuizAsync(id);
+            if (quiz == null)
+            {
+                return NotFound(new { message = $"No quiz found for chapter {id}." });
+            }
+            return Ok(quiz);
+        }
+
+        [HttpGet("{id}/content")]
+        public async Task<ActionResult<string>> GetContent(int id)
+        {
+            string? content = await _chapterService.GetContentAsync(id);
+            if (content == null)
+            {
+                return NotFound(new { message = $"No content found for chapter {id}." });
+            }
+            return Ok(content);
+        }
+
+        [HttpPost("{id}/quiz/check")]
+        [Authorize]
+        public async Task<ActionResult<bool>> CheckAnswer(int id, [FromBody] CheckAnswerDto dto)
+        {
+            bool correct = await _chapterService.CheckAnswerAsync(dto.QuestionId, dto.Answer);
+            return Ok(correct);
+        }
+
+        [HttpPost("{id}/quiz/result")]
+        [Authorize]
+        public async Task<ActionResult> SaveQuizResult(int id, [FromBody] SaveQuizResultDto dto)
+        {
+            string? userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+            await _chapterService.SaveQuizResultAsync(id, userId, dto.Passed);
+            return Ok();
+        }
     }
 }

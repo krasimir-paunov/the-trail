@@ -10,11 +10,70 @@ namespace TheTrail.Services
     {
         private readonly IRepository<Chapter> _chapterRepository;
         private readonly IRepository<UserChapterProgress> _progressRepository;
+        private readonly IRepository<Question> _questionRepository;
+        private readonly IRepository<Collectible> _collectibleRepository;
+        private readonly IRepository<UserCollectible> _userCollectibleRepository;
 
-        public ChapterService(IRepository<Chapter> chapterRepository,IRepository<UserChapterProgress> progressRepository)
+        public ChapterService(
+            IRepository<Chapter> chapterRepository,
+            IRepository<UserChapterProgress> progressRepository,
+            IRepository<Question> questionRepository,
+            IRepository<Collectible> collectibleRepository,
+            IRepository<UserCollectible> userCollectibleRepository)
         {
             _chapterRepository = chapterRepository;
             _progressRepository = progressRepository;
+            _questionRepository = questionRepository;
+            _collectibleRepository = collectibleRepository;
+            _userCollectibleRepository = userCollectibleRepository;
+        }
+
+        public async Task SaveQuizResultAsync(int chapterId, string userId, bool passed)
+        {
+            UserChapterProgress? progress = await _progressRepository
+                .All()
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.ChapterId == chapterId);
+
+            if (progress == null)
+            {
+                progress = new UserChapterProgress
+                {
+                    UserId = userId,
+                    ChapterId = chapterId,
+                    ScrollCompleted = true,
+                    QuizPassed = passed
+                };
+                await _progressRepository.AddAsync(progress);
+            }
+            else
+            {
+                progress.QuizPassed = passed;
+                await _progressRepository.UpdateAsync(progress);
+            }
+
+            if (passed)
+            {
+                Collectible? collectible = await _collectibleRepository
+                    .AllAsNoTracking()
+                    .FirstOrDefaultAsync(c => c.ChapterId == chapterId);
+
+                if (collectible != null)
+                {
+                    bool alreadyEarned = await _userCollectibleRepository
+                        .AllAsNoTracking()
+                        .AnyAsync(uc => uc.UserId == userId && uc.CollectibleId == collectible.Id);
+
+                    if (!alreadyEarned)
+                    {
+                        await _userCollectibleRepository.AddAsync(new UserCollectible
+                        {
+                            UserId = userId,
+                            CollectibleId = collectible.Id,
+                            EarnedOn = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
         }
 
         public async Task<IEnumerable<ChapterDto>> GetByEraAsync(int eraId, string? userId)
@@ -60,7 +119,6 @@ namespace TheTrail.Services
             };
 
             await _chapterRepository.AddAsync(chapter);
-
             return MapToDto(chapter, null);
         }
 
@@ -81,7 +139,6 @@ namespace TheTrail.Services
             chapter.IsPublished = dto.IsPublished;
 
             await _chapterRepository.UpdateAsync(chapter);
-
             return MapToDto(chapter, null);
         }
 
@@ -94,7 +151,6 @@ namespace TheTrail.Services
             if (chapter == null) return false;
 
             await _chapterRepository.DeleteAsync(chapter);
-
             return true;
         }
 
@@ -113,7 +169,6 @@ namespace TheTrail.Services
                     ChapterId = chapterId,
                     ScrollCompleted = true
                 };
-
                 await _progressRepository.AddAsync(progress);
             }
             else
@@ -123,6 +178,57 @@ namespace TheTrail.Services
             }
 
             return true;
+        }
+
+        public async Task<QuizDto?> GetQuizAsync(int chapterId)
+        {
+            Quiz? quiz = await _chapterRepository
+                .AllAsNoTracking()
+                .Where(c => c.Id == chapterId)
+                .Include(c => c.Quiz)
+                .ThenInclude(q => q!.Questions)
+                .Select(c => c.Quiz)
+                .FirstOrDefaultAsync();
+
+            if (quiz == null) return null;
+
+            return new QuizDto
+            {
+                Id = quiz.Id,
+                PassMarkPercent = quiz.PassMarkPercent,
+                Questions = quiz.Questions
+                    .OrderBy(q => q.Order)
+                    .Select(q => new QuestionDto
+                    {
+                        Id = q.Id,
+                        Text = q.Text,
+                        OptionA = q.OptionA,
+                        OptionB = q.OptionB,
+                        OptionC = q.OptionC,
+                        OptionD = q.OptionD,
+                        Order = q.Order
+                    })
+            };
+        }
+
+        public async Task<string?> GetContentAsync(int chapterId)
+        {
+            return await _chapterRepository
+                .AllAsNoTracking()
+                .Where(c => c.Id == chapterId)
+                .Select(c => c.Content)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> CheckAnswerAsync(int questionId, string answer)
+        {
+            Question? question = await _questionRepository
+                .AllAsNoTracking()
+                .FirstOrDefaultAsync(q => q.Id == questionId);
+
+            if (question == null) return false;
+
+            return question.CorrectOption.Equals(answer, StringComparison.OrdinalIgnoreCase);
         }
 
         private ChapterDto MapToDto(Chapter chapter, string? userId)
