@@ -509,12 +509,12 @@ export default function ChapterPage() {
                     className="text-center pt-16"
                     style={{ borderTop: '1px solid var(--parchment-border)' }}
                   >
-                    <p className="text-sm tracking-[0.4em] uppercase mb-3"
-                      style={{ color: '#eab308' }}>
-                      ★ Chapter Complete
-                    </p>
-                    <p className="text-lg"
-                      style={{ color: 'var(--ink-light)', fontFamily: "'EB Garamond', serif" }}>
+<p className="text-xl tracking-[0.4em] uppercase mb-3"
+  style={{ color: '#ca8a04', fontFamily: "'Cinzel', serif", fontWeight: '700' }}>
+  ★ Chapter Complete
+</p>
+<p className="text-xl"
+  style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
                       You have mastered this chapter.
                     </p>
                   </motion.div>
