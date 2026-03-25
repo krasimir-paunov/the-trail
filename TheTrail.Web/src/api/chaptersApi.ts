@@ -1,5 +1,5 @@
 import apiClient from './client.ts'
-import type { ChapterDto } from '../types/index.ts'
+import type { ChapterDto, QuizQuestion } from '../types/index.ts'
 
 export const chaptersApi = {
   getByEra: async (eraId: number): Promise<ChapterDto[]> => {
@@ -16,4 +16,18 @@ export const chaptersApi = {
     const response = await apiClient.post<boolean>(`/api/chapters/${chapterId}/complete-scroll`)
     return response.data
   },
+
+  getContent: async (id: number): Promise<string> => {
+    const response = await apiClient.get<string>(`/api/chapters/${id}/content`)
+    return response.data
+  },
+
+  getQuiz: async (id: number): Promise<QuizQuestion[]> => {
+    const response = await apiClient.get<{ questions: QuizQuestion[] }>(`/api/chapters/${id}/quiz`)
+    return response.data.questions
+  },
+
+  saveQuizResult: async (chapterId: number, passed: boolean): Promise<void> => {
+  await apiClient.post(`/api/chapters/${chapterId}/quiz/result`, { passed })
+},
 }

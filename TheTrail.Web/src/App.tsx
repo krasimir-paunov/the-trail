@@ -5,6 +5,7 @@ import LoginPage from './pages/Auth/LoginPage.tsx'
 import RegisterPage from './pages/Auth/RegisterPage.tsx'
 import EraPage from './pages/Era/EraPage.tsx'
 import ChapterPage from './pages/Chapter/ChapterPage.tsx'
+import ProfilePage from './pages/Profile/ProfilePage.tsx'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/eras/:id" element={<EraPage />} />
         <Route path="/chapters/:id" element={<ChapterPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </Layout>
   )

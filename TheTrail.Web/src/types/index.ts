@@ -43,3 +43,13 @@ export interface RegisterDto {
   password: string;
   confirmPassword: string;
 }
+
+export interface QuizQuestion {
+  id: number
+  text: string
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  order: number
+}

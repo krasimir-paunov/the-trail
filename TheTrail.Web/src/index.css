@@ -1,5 +1,16 @@
 @import 'tailwindcss';
 
+.drop-cap::first-letter {
+  float: left;
+  font-size: 4.5rem;
+  line-height: 0.8;
+  padding-right: 0.12em;
+  padding-top: 0.08em;
+  font-family: 'Cinzel', serif;
+  color: #d4a853;
+  font-weight: 700;
+}
+
 * {
   font-family: 'EB Garamond', Georgia, serif;
 }
@@ -9,3 +20,5 @@ h2,
 h3 {
   font-family: 'Cinzel', serif;
 }
+
+

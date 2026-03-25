@@ -1,25 +1,29 @@
 import { motion } from 'framer-motion'
 import { Compass } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.tsx'
+import { useEffect, useState } from 'react'
+import { erasApi } from '../api/erasApi.ts'
+import type { EraDto } from '../types/index.ts'
 
 export default function Footer() {
   const navigate = useNavigate()
+  const { isAuthenticated, user, logout } = useAuth()
+  const [eras, setEras] = useState<EraDto[]>([])
 
-  const exploreLinks = [
-    { label: 'Prehistoric Era', path: '/eras/1' },
-    { label: 'Ancient Civilizations', path: '/eras/2' },
-    { label: 'Medieval', path: '/eras/3' },
-    { label: 'Renaissance', path: '/eras/4' },
-    { label: 'Modern History', path: '/eras/5' },
-    { label: 'Digital Age', path: '/eras/6' },
-  ]
+  useEffect(() => {
+    erasApi.getAll().then(setEras).catch(() => {})
+  }, [])
 
-  const accountLinks = [
-    { label: 'Login', path: '/login' },
-    { label: 'Register', path: '/register' },
-    { label: 'My Profile', path: '/profile' },
-    { label: 'My Collection', path: '/collection' },
-  ]
+  const accountLinks = isAuthenticated
+    ? [
+        { label: user?.displayName ?? 'Profile', path: '/profile' },
+        { label: 'My Collection', path: '/profile' },
+      ]
+    : [
+        { label: 'Login', path: '/login' },
+        { label: 'Register', path: '/register' },
+      ]
 
   return (
     <motion.footer
@@ -46,19 +50,19 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Explore */}
+          {/* Explore — dynamic era links */}
           <div>
             <p className="text-stone-400 text-xs tracking-[0.3em] uppercase mb-6">
               Explore
             </p>
             <ul className="flex flex-col gap-3">
-              {exploreLinks.map((link) => (
-                <li key={link.path}>
+              {eras.map((era) => (
+                <li key={era.id}>
                   <button
-                    onClick={() => navigate(link.path)}
+                    onClick={() => navigate(`/eras/${era.id}`)}
                     className="text-stone-500 text-sm hover:text-amber-200/80 transition-colors duration-300 cursor-pointer text-left"
                   >
-                    {link.label}
+                    {era.name}
                   </button>
                 </li>
               ))}
@@ -72,7 +76,7 @@ export default function Footer() {
             </p>
             <ul className="flex flex-col gap-3">
               {accountLinks.map((link) => (
-                <li key={link.path}>
+                <li key={link.label}>
                   <button
                     onClick={() => navigate(link.path)}
                     className="text-stone-500 text-sm hover:text-amber-200/80 transition-colors duration-300 cursor-pointer text-left"
@@ -81,6 +85,19 @@ export default function Footer() {
                   </button>
                 </li>
               ))}
+              {isAuthenticated && (
+                <li>
+                  <button
+                    onClick={() => {
+                      logout()
+                      navigate('/')
+                    }}
+                    className="text-stone-600 text-sm hover:text-red-400/80 transition-colors duration-300 cursor-pointer text-left"
+                  >
+                    Logout
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
