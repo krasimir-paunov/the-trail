@@ -83,11 +83,13 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: 'var(--hero-dark)' }}>
         <motion.div
           animate={{ opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-stone-400 text-xl tracking-widest uppercase"
+          className="text-xl tracking-widest uppercase"
+          style={{ color: 'var(--accent-amber)' }}
         >
           The Trail awaits...
         </motion.div>
@@ -96,15 +98,15 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-950">
-      {/* Hero Section */}
+    <div className="min-h-screen" style={{ background: 'var(--hero-dark)' }}>
+
+      {/* ── Hero Section — dark cinematic ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.5 }}
         className="relative h-screen flex flex-col items-center justify-center text-center px-4"
       >
-        {/* Background map */}
         <div className="absolute inset-0">
           <img
             src="/images/HeroMap.jpg"
@@ -112,9 +114,7 @@ export default function HomePage() {
             className="w-full h-full object-cover"
             style={{ objectPosition: '50% 40%' }}
           />
-          {/* Dark overlay */}
           <div className="absolute inset-0 bg-black/60" />
-          {/* Edge vignette */}
           <div
             className="absolute inset-0"
             style={{
@@ -123,12 +123,12 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Content */}
         <motion.p
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 1 }}
-          className="relative z-10 text-amber-200/60 text-sm tracking-[0.3em] uppercase mb-6"
+          className="relative z-10 text-sm tracking-[0.4em] uppercase mb-6"
+          style={{ color: 'var(--accent-amber)', opacity: 0.7 }}
         >
           An interactive history encyclopedia
         </motion.p>
@@ -137,7 +137,8 @@ export default function HomePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 1 }}
-          className="relative z-10 text-6xl md:text-8xl font-bold text-amber-50 mb-6 tracking-tight"
+          className="relative z-10 text-6xl md:text-8xl font-bold mb-6"
+          style={{ color: 'var(--parchment-light)', fontFamily: "'Cinzel', serif" }}
         >
           The Trail
         </motion.h1>
@@ -146,7 +147,8 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2, duration: 1 }}
-          className="relative z-10 text-amber-200/70 text-lg md:text-xl mb-12 tracking-wide"
+          className="relative z-10 text-lg md:text-xl mb-12 tracking-wide"
+          style={{ color: 'var(--parchment-dark)' }}
         >
           Follow the trail of human history
         </motion.p>
@@ -160,7 +162,12 @@ export default function HomePage() {
           onClick={() => {
             document.getElementById('eras')?.scrollIntoView({ behavior: 'smooth' })
           }}
-          className="relative z-10 px-8 py-4 border border-amber-200/40 text-amber-200/80 tracking-widest uppercase text-sm hover:border-amber-200/80 hover:text-amber-50 transition-all duration-300"
+          className="relative z-10 px-8 py-4 text-sm tracking-widest uppercase transition-all duration-300"
+          style={{
+            border: '1px solid var(--accent-amber-dim)',
+            color: 'var(--parchment-light)',
+            fontFamily: "'Cinzel', serif"
+          }}
         >
           Begin Your Journey
         </motion.button>
@@ -168,25 +175,30 @@ export default function HomePage() {
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-8 z-10 text-amber-200/40 text-xs tracking-widest uppercase"
+          className="absolute bottom-8 z-10 text-xs tracking-widest uppercase"
+          style={{ color: 'var(--accent-amber)', opacity: 0.4 }}
         >
           Scroll to explore
         </motion.div>
       </motion.div>
 
-      {/* Era Accordion Panels */}
-      <div id="eras" className="pb-24">
+      {/* ── Era Accordion — dark cinematic ── */}
+      <div id="eras">
         <motion.h2
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center text-stone-400 text-base tracking-[0.6em] uppercase py-8 border-t border-stone-800"
+          className="text-center text-base tracking-[0.6em] uppercase py-8"
+          style={{
+            color: 'var(--parchment-dark)',
+            borderTop: '1px solid rgba(196,164,122,0.2)'
+          }}
         >
           Choose Your Era
         </motion.h2>
 
         <div className="flex overflow-hidden" style={{ height: '700px' }}>
-            {eras.map((era) => {
+          {eras.map((era) => {
             const theme = getTheme(era.colorTheme)
             const isActive = activeEra === era.id
             const isAnyActive = activeEra !== null
@@ -203,7 +215,6 @@ export default function HomePage() {
                 onClick={() => navigate(`/eras/${era.id}`)}
                 className="relative overflow-hidden cursor-pointer flex-1"
               >
-                {/* Background */}
                 {theme.image ? (
                   <motion.img
                     src={theme.image}
@@ -217,24 +228,19 @@ export default function HomePage() {
                   <div className={`absolute inset-0 bg-linear-to-b ${theme.bg}`} />
                 )}
 
-                {/* Overlay */}
                 <motion.div
                   animate={{ opacity: isActive ? 0.3 : 0.65 }}
                   transition={{ duration: 0.4 }}
                   className="absolute inset-0 bg-black"
                 />
 
-                {/* Bottom gradient for text */}
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
 
-                {/* Content */}
                 <div className="absolute inset-0 flex flex-col justify-between p-6">
-                  {/* Top */}
                   <p className={`text-xs tracking-[0.25em] uppercase ${theme.accent}`}>
                     Era {era.order}
                   </p>
 
-                  {/* Bottom */}
                   <div>
                     <motion.h3
                       animate={{
@@ -247,6 +253,7 @@ export default function HomePage() {
                         writingMode: isActive ? 'horizontal-tb' : 'vertical-rl',
                         textOrientation: 'mixed',
                         transform: isActive ? 'none' : 'rotate(180deg)',
+                        fontFamily: "'Cinzel', serif"
                       }}
                     >
                       {era.name}
@@ -257,19 +264,20 @@ export default function HomePage() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <p className={`text-sm mb-3 opacity-80 ${theme.text}`}>
+                      <p className={`text-base mb-3 opacity-80 ${theme.text}`}
+                        style={{ fontFamily: "'EB Garamond', serif" }}>
                         {theme.description}
                       </p>
                       <div className="flex items-center justify-between">
-                        <p className={`text-xs ${theme.accent}`}>
+                        <p className={`text-sm ${theme.accent}`}>
                           {era.chapterCount} {era.chapterCount === 1 ? 'chapter' : 'chapters'}
                         </p>
-                        <p className={`text-xs tracking-widest uppercase ${theme.accent}`}>
+                        <p className={`text-sm tracking-widest uppercase ${theme.accent}`}>
                           Enter →
                         </p>
                       </div>
                       {era.isGrandmasterUnlocked && (
-                        <p className="text-xs text-yellow-400 mt-2">★ Grandmaster</p>
+                        <p className="text-sm text-yellow-400 mt-2">★ Grandmaster</p>
                       )}
                     </motion.div>
                   </div>
@@ -279,67 +287,90 @@ export default function HomePage() {
           })}
         </div>
       </div>
-            {/* How It Works */}
-<div className="max-w-4xl mx-auto px-4 py-24">
-  <motion.p
-    initial={{ opacity: 0 }}
-    whileInView={{ opacity: 1 }}
-    viewport={{ once: true }}
-    className="text-center text-amber-200/40 text-xs tracking-[0.4em] uppercase mb-4"
-  >
-    The Journey
-  </motion.p>
 
-  <motion.h2
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay: 0.1, duration: 0.9 }}
-    className="text-center text-3xl font-bold text-amber-50 mb-16"
-  >
-    How The Trail Works
-  </motion.h2>
+      {/* ── How It Works — parchment ── */}
+      <div className="parchment">
+        <div className="max-w-4xl mx-auto px-4 py-24">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-xs tracking-[0.5em] uppercase mb-4"
+            style={{ color: 'var(--accent-amber-dim)' }}
+          >
+            The Journey
+          </motion.p>
 
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-    {[
-      {
-        number: 'I',
-        title: 'Choose Your Era',
-        description: 'Select from six distinct eras of human history. Each era is a world unto itself — visually unique, historically rich.'
-      },
-      {
-        number: 'II',
-        title: 'Follow The Trail',
-        description: 'Explore chapters within each era. Read the stories, study the events, absorb the knowledge at your own pace.'
-      },
-      {
-        number: 'III',
-        title: 'Earn Your Place',
-        description: 'Complete quizzes to earn collectibles and era badges. Prove your knowledge. Build your trophy cabinet.'
-      },
-    ].map((step, i) => (
-      <motion.div
-        key={step.number}
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: i * 0.2, duration: 0.9 }}
-        className="text-center"
-      >
-        <p className="text-amber-200/30 text-5xl font-bold mb-6">
-          {step.number}
-        </p>
-        <div className="w-px h-12 bg-stone-800 mx-auto mb-6" />
-        <h3 className="text-amber-50 text-lg font-bold mb-4 tracking-wide">
-          {step.title}
-        </h3>
-        <p className="text-stone-500 text-base leading-relaxed">
-          {step.description}
-        </p>
-      </motion.div>
-    ))}
-  </div>
-</div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1, duration: 0.9 }}
+            className="text-center text-4xl font-bold mb-20"
+            style={{
+              color: 'var(--ink-dark)',
+              fontFamily: "'Cinzel', serif"
+            }}
+          >
+            How The Trail Works
+          </motion.h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
+            {[
+              {
+                number: 'I',
+                title: 'Choose Your Era',
+                description: 'Select from six distinct eras of human history. Each era is a world unto itself — visually unique, historically rich.'
+              },
+              {
+                number: 'II',
+                title: 'Follow The Trail',
+                description: 'Explore chapters within each era. Read the stories, study the events, absorb the knowledge at your own pace.'
+              },
+              {
+                number: 'III',
+                title: 'Earn Your Place',
+                description: 'Complete quizzes to earn collectibles and era badges. Prove your knowledge. Build your trophy cabinet.'
+              },
+            ].map((step, i) => (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.2, duration: 0.9 }}
+                className="text-center"
+              >
+                <p className="text-6xl font-bold mb-6"
+                  style={{
+                    color: 'var(--accent-amber)',
+                    fontFamily: "'Cinzel', serif",
+                    opacity: 0.5
+                  }}>
+                  {step.number}
+                </p>
+                <div className="w-px h-14 mx-auto mb-6"
+                  style={{ background: 'var(--parchment-border)' }} />
+                <h3 className="text-xl font-bold mb-4 tracking-wide"
+                  style={{
+                    color: 'var(--ink-dark)',
+                    fontFamily: "'Cinzel', serif"
+                  }}>
+                  {step.title}
+                </h3>
+                <p className="text-lg leading-relaxed"
+                  style={{
+                    color: 'var(--ink-light)',
+                    fontFamily: "'EB Garamond', serif"
+                  }}>
+                  {step.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
