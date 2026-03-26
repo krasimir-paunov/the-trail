@@ -16,5 +16,11 @@ namespace TheTrail.Services.Core.DTOs.Chapter
         public bool HasQuiz { get; set; }
         public bool HasCollectible { get; set; }
         public Rarity? CollectibleRarity { get; set; }
+        public string? CollectibleName { get; set; }
+        public string? CollectibleDescription { get; set; }
+        public string? CollectibleImageUrl { get; set; }
+        public string? RareCollectibleName { get; set; }
+        public string? RareCollectibleDescription { get; set; }
+        public string? RareCollectibleImageUrl { get; set; }
     }
 }

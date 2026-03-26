@@ -139,9 +139,10 @@ namespace TheTrail.Api.Controllers
         [Authorize]
         public async Task<ActionResult> SaveQuizResult(int id, [FromBody] SaveQuizResultDto dto)
         {
-            string? userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
-            await _chapterService.SaveQuizResultAsync(id, userId, dto.Passed);
+
+            await _chapterService.SaveQuizResultAsync(id, userId, dto.Passed, dto.PerfectScore);
             return Ok();
         }
     }

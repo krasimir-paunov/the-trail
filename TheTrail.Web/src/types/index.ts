@@ -23,6 +23,12 @@ export interface ChapterDto {
   hasQuiz: boolean;
   hasCollectible: boolean;
   collectibleRarity: string | null;
+  collectibleName: string | null;
+  collectibleDescription: string | null;
+  collectibleImageUrl: string | null;
+  rareCollectibleName: string | null;
+  rareCollectibleDescription: string | null;
+  rareCollectibleImageUrl: string | null;
 }
 
 export interface AuthResponseDto {

@@ -26,7 +26,7 @@
 
         public Quiz? Quiz { get; set; }
 
-        public Collectible? Collectible { get; set; }
+        public ICollection<Collectible> Collectibles { get; set; } = new HashSet<Collectible>();
 
         public ICollection<UserChapterProgress> UserProgresses { get; set; } = new HashSet<UserChapterProgress>();
     }

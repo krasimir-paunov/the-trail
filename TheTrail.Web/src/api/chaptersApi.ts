@@ -27,7 +27,7 @@ export const chaptersApi = {
     return response.data.questions
   },
 
-  saveQuizResult: async (chapterId: number, passed: boolean): Promise<void> => {
-  await apiClient.post(`/api/chapters/${chapterId}/quiz/result`, { passed })
+saveQuizResult: async (chapterId: number, passed: boolean, perfectScore: boolean): Promise<void> => {
+  await apiClient.post(`/api/chapters/${chapterId}/quiz/result`, { passed, perfectScore })
 },
 }

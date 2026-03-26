@@ -28,8 +28,9 @@ namespace TheTrail.Services
             _userCollectibleRepository = userCollectibleRepository;
         }
 
-        public async Task SaveQuizResultAsync(int chapterId, string userId, bool passed)
+        public async Task SaveQuizResultAsync(int chapterId, string userId, bool passed, bool perfectScore)
         {
+            // ── Update progress record ──────────────────────────────────────
             UserChapterProgress? progress = await _progressRepository
                 .All()
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.ChapterId == chapterId);
@@ -47,28 +48,59 @@ namespace TheTrail.Services
             }
             else
             {
-                progress.QuizPassed = passed;
+                // Only upgrade — never downgrade a previously passed quiz
+                if (passed) progress.QuizPassed = true;
                 await _progressRepository.UpdateAsync(progress);
             }
 
+            // ── Award Common collectible (pass with 60%+) ───────────────────
             if (passed)
             {
-                Collectible? collectible = await _collectibleRepository
+                Collectible? commonCollectible = await _collectibleRepository
                     .AllAsNoTracking()
-                    .FirstOrDefaultAsync(c => c.ChapterId == chapterId);
+                    .FirstOrDefaultAsync(c => c.ChapterId == chapterId
+                                           && c.Rarity == Domain.Enums.Rarity.Common);
 
-                if (collectible != null)
+                if (commonCollectible != null)
                 {
                     bool alreadyEarned = await _userCollectibleRepository
                         .AllAsNoTracking()
-                        .AnyAsync(uc => uc.UserId == userId && uc.CollectibleId == collectible.Id);
+                        .AnyAsync(uc => uc.UserId == userId
+                                     && uc.CollectibleId == commonCollectible.Id);
 
                     if (!alreadyEarned)
                     {
                         await _userCollectibleRepository.AddAsync(new UserCollectible
                         {
                             UserId = userId,
-                            CollectibleId = collectible.Id,
+                            CollectibleId = commonCollectible.Id,
+                            EarnedOn = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
+            // ── Award Rare collectible (perfect score 5/5) ──────────────────
+            if (perfectScore)
+            {
+                Collectible? rareCollectible = await _collectibleRepository
+                    .AllAsNoTracking()
+                    .FirstOrDefaultAsync(c => c.ChapterId == chapterId
+                                           && c.Rarity == Domain.Enums.Rarity.Rare);
+
+                if (rareCollectible != null)
+                {
+                    bool alreadyEarned = await _userCollectibleRepository
+                        .AllAsNoTracking()
+                        .AnyAsync(uc => uc.UserId == userId
+                                     && uc.CollectibleId == rareCollectible.Id);
+
+                    if (!alreadyEarned)
+                    {
+                        await _userCollectibleRepository.AddAsync(new UserCollectible
+                        {
+                            UserId = userId,
+                            CollectibleId = rareCollectible.Id,
                             EarnedOn = DateTime.UtcNow
                         });
                     }
@@ -82,7 +114,7 @@ namespace TheTrail.Services
                 .AllAsNoTracking()
                 .Where(c => c.EraId == eraId && c.IsPublished)
                 .OrderBy(c => c.Order)
-                .Include(c => c.Collectible)
+                .Include(c => c.Collectibles)
                 .Include(c => c.Quiz)
                 .ToListAsync();
 
@@ -94,7 +126,7 @@ namespace TheTrail.Services
             Chapter? chapter = await _chapterRepository
                 .AllAsNoTracking()
                 .Where(c => c.Id == id && c.IsPublished)
-                .Include(c => c.Collectible)
+                .Include(c => c.Collectibles)
                 .Include(c => c.Quiz)
                 .FirstOrDefaultAsync();
 
@@ -236,9 +268,14 @@ namespace TheTrail.Services
             UserChapterProgress? progress = userId != null
                 ? _progressRepository
                     .AllAsNoTracking()
-                    .FirstOrDefault(p => p.UserId == userId
-                                      && p.ChapterId == chapter.Id)
+                    .FirstOrDefault(p => p.UserId == userId && p.ChapterId == chapter.Id)
                 : null;
+
+            Collectible? common = chapter.Collectibles
+                .FirstOrDefault(c => c.Rarity == Domain.Enums.Rarity.Common);
+
+            Collectible? rare = chapter.Collectibles
+                .FirstOrDefault(c => c.Rarity == Domain.Enums.Rarity.Rare);
 
             return new ChapterDto
             {
@@ -252,8 +289,14 @@ namespace TheTrail.Services
                 ScrollCompleted = progress?.ScrollCompleted ?? false,
                 QuizPassed = progress?.QuizPassed ?? false,
                 HasQuiz = chapter.Quiz != null,
-                HasCollectible = chapter.Collectible != null,
-                CollectibleRarity = chapter.Collectible?.Rarity
+                HasCollectible = chapter.Collectibles.Any(),
+                CollectibleRarity = common?.Rarity,
+                CollectibleName = common?.Name,
+                CollectibleDescription = common?.Description,
+                CollectibleImageUrl = common?.ArtworkUrl,
+                RareCollectibleName = rare?.Name,
+                RareCollectibleDescription = rare?.Description,
+                RareCollectibleImageUrl = rare?.ArtworkUrl,
             };
         }
     }

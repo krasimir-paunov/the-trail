@@ -30,9 +30,9 @@ namespace TheTrail.Data.Configuration
                 .HasForeignKey<Quiz>(q => q.ChapterId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasOne(c => c.Collectible)
+            builder.HasMany(c => c.Collectibles)
                 .WithOne(col => col.Chapter)
-                .HasForeignKey<Collectible>(col => col.ChapterId)
+                .HasForeignKey(col => col.ChapterId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(c => c.UserProgresses)

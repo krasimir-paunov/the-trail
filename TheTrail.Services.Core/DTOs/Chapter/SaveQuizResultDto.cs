@@ -3,5 +3,6 @@
     public class SaveQuizResultDto
     {
         public bool Passed { get; set; }
+        public bool PerfectScore { get; set; }
     }
 }

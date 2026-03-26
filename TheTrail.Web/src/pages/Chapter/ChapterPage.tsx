@@ -5,7 +5,6 @@ import { chaptersApi } from '../../api/chaptersApi.ts'
 import { useAuth } from '../../context/AuthContext.tsx'
 import type { ChapterDto, QuizQuestion } from '../../types/index.ts'
 
-// ── Content block types ────────────────────────────────────────────────
 interface ParagraphBlock { type: 'paragraph'; text: string }
 interface FactBlock { type: 'fact'; title: string; text: string }
 interface ImageBlock { type: 'image'; url: string; caption: string }
@@ -32,8 +31,12 @@ export default function ChapterPage() {
   const [score, setScore] = useState(0)
   const [quizComplete, setQuizComplete] = useState(false)
   const [quizPassed, setQuizPassed] = useState(false)
+  const [perfectScore, setPerfectScore] = useState(false)
   const [showReward, setShowReward] = useState(false)
+  const [earnedRare, setEarnedRare] = useState(false)
+  const [hasEarnedRare, setHasEarnedRare] = useState(false)
 
+  // ── Load chapter data ─────────────────────────────────────────────
   useEffect(() => {
     if (!id) return
     const chapterId = parseInt(id)
@@ -59,7 +62,16 @@ export default function ChapterPage() {
     }).catch(() => navigate('/'))
   }, [id, navigate])
 
-  // ── Scroll progress tracking ───────────────────────────────────────
+  // ── Check localStorage for rare earned status ─────────────────────
+  useEffect(() => {
+    if (!id) return
+    const rareKey = `rare_earned_${id}`
+    if (localStorage.getItem(rareKey) === 'true') {
+      setHasEarnedRare(true)
+    }
+  }, [id])
+
+  // ── Scroll progress ───────────────────────────────────────────────
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY
@@ -79,25 +91,29 @@ export default function ChapterPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [scrollCompleted, isAuthenticated, id])
 
-  // ── Quiz logic ─────────────────────────────────────────────────────
+  // ── Quiz logic ────────────────────────────────────────────────────
   const handleAnswer = (option: string) => {
     if (selectedAnswer) return
     setSelectedAnswer(option)
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
     const token = localStorage.getItem('token')
+    if (token) headers['Authorization'] = `Bearer ${token}`
 
     fetch(`https://localhost:7134/api/chapters/${id}/quiz/check`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      },
+      headers,
       body: JSON.stringify({
         questionId: quizQuestions[currentQuestion].id,
         answer: option
       })
     })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
       .then((correct: boolean) => {
         setAnsweredCorrectly(correct)
         setAnswers(prev => ({ ...prev, [currentQuestion]: correct }))
@@ -109,41 +125,74 @@ export default function ChapterPage() {
             setSelectedAnswer(null)
             setAnsweredCorrectly(null)
           } else {
-            const finalScore = correct ? score + 1 : score
-            const passPercent = Math.round((finalScore / quizQuestions.length) * 100)
-            const isPassed = passPercent >= 60
-            setQuizComplete(true)
-            setQuizPassed(isPassed)
-            if (isPassed && isAuthenticated && id) {
-              chaptersApi.saveQuizResult(parseInt(id), true).catch(() => {})
-            }
-            if (isPassed) {
-              setTimeout(() => setShowReward(true), 800)
-            }
+            setScore(finalScore => {
+              const passPercent = Math.round((finalScore / quizQuestions.length) * 100)
+              const isPassed = passPercent >= 60
+              const isPerfect = finalScore === quizQuestions.length
+
+              setPerfectScore(isPerfect)
+
+              if (isPerfect) {
+                setEarnedRare(true)
+                setHasEarnedRare(true)
+                // Persist so it survives page reloads
+                if (id) localStorage.setItem(`rare_earned_${id}`, 'true')
+              }
+
+              setTimeout(() => {
+                setQuizComplete(true)
+                setQuizPassed(isPassed)
+
+                if (isPassed && isAuthenticated && id) {
+                  chaptersApi.saveQuizResult(parseInt(id), isPassed, isPerfect).catch(() => {})
+                }
+                if (isPassed) {
+                  setTimeout(() => setShowReward(true), 1200)
+                }
+              }, 100)
+
+              return finalScore
+            })
           }
         }, 1500)
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Quiz check error:', err)
         setAnsweredCorrectly(false)
         setAnswers(prev => ({ ...prev, [currentQuestion]: false }))
+
         setTimeout(() => {
-          setSelectedAnswer(null)
-          setAnsweredCorrectly(null)
+          if (currentQuestion < quizQuestions.length - 1) {
+            setCurrentQuestion(q => q + 1)
+            setSelectedAnswer(null)
+            setAnsweredCorrectly(null)
+          } else {
+            setScore(finalScore => {
+              const passPercent = Math.round((finalScore / quizQuestions.length) * 100)
+              const isPassed = passPercent >= 60
+              const isPerfect = finalScore === quizQuestions.length
+              setQuizComplete(true)
+              setQuizPassed(isPassed)
+              setPerfectScore(isPerfect)
+              return finalScore
+            })
+          }
         }, 1500)
       })
   }
 
-  const getOptionClass = (option: string) => {
-    if (!selectedAnswer) {
-      return 'cursor-pointer transition-all duration-300'
-    }
-    if (answeredCorrectly && option === selectedAnswer) {
-      return 'transition-all duration-300'
-    }
-    if (!answeredCorrectly && option === selectedAnswer) {
-      return 'transition-all duration-300'
-    }
-    return 'transition-all duration-300'
+  // ── resetQuiz — never touches quizPassed (server state) ──────────
+  const resetQuiz = () => {
+    setCurrentQuestion(0)
+    setSelectedAnswer(null)
+    setAnsweredCorrectly(null)
+    setAnswers({})
+    setScore(0)
+    setQuizComplete(false)
+    setPerfectScore(false)
+    setEarnedRare(false)
+    setShowReward(false)
+    // quizPassed intentionally NOT reset — it reflects server state
   }
 
   const getOptionStyle = (option: string) => {
@@ -173,15 +222,6 @@ export default function ChapterPage() {
       color: 'var(--ink-muted)',
       background: 'var(--parchment-mid)',
     }
-  }
-
-  const resetQuiz = () => {
-    setCurrentQuestion(0)
-    setSelectedAnswer(null)
-    setAnsweredCorrectly(null)
-    setAnswers({})
-    setScore(0)
-    setQuizComplete(false)
   }
 
   if (loading || !chapter) {
@@ -215,7 +255,7 @@ export default function ChapterPage() {
         />
       </div>
 
-      {/* Chapter Hero — dark cinematic */}
+      {/* Chapter Hero */}
       <div className="relative h-[35vh] flex flex-col items-center justify-end pb-12 px-4">
         <div className="absolute inset-0"
           style={{ background: 'linear-gradient(to bottom, #1a0f05, var(--hero-dark))' }} />
@@ -267,26 +307,20 @@ export default function ChapterPage() {
       <div className="parchment">
         <div className="flex gap-0 max-w-6xl mx-auto px-4 py-20">
 
-          {/* Sticky left sidebar */}
+          {/* Sticky sidebar */}
           <div className="hidden lg:flex flex-col w-56 shrink-0 pr-10">
             <div className="sticky top-24 flex flex-col gap-8">
-
               <div>
                 <p className="text-xs tracking-[0.3em] uppercase mb-2"
-                  style={{ color: 'var(--ink-muted)' }}>
-                  Chapter
-                </p>
+                  style={{ color: 'var(--ink-muted)' }}>Chapter</p>
                 <p className="text-base font-bold leading-snug"
                   style={{ color: 'var(--ink-dark)', fontFamily: "'Cinzel', serif" }}>
                   {chapter.title}
                 </p>
               </div>
-
               <div>
                 <p className="text-xs tracking-[0.3em] uppercase mb-2"
-                  style={{ color: 'var(--ink-muted)' }}>
-                  Reading
-                </p>
+                  style={{ color: 'var(--ink-muted)' }}>Reading</p>
                 <p className="text-4xl font-bold mb-4"
                   style={{ color: 'var(--ink-dark)', fontFamily: "'Cinzel', serif" }}>
                   {Math.round(scrollProgress)}%
@@ -295,28 +329,21 @@ export default function ChapterPage() {
                   style={{ background: 'var(--parchment-border)' }}>
                   <motion.div
                     className="w-px absolute top-0 left-0"
-                    style={{
-                      height: `${scrollProgress}%`,
-                      background: 'var(--accent-amber)'
-                    }}
+                    style={{ height: `${scrollProgress}%`, background: 'var(--accent-amber)' }}
                     transition={{ duration: 0.1 }}
                   />
                 </div>
               </div>
-
               <div>
                 <p className="text-xs tracking-[0.3em] uppercase mb-4"
-                  style={{ color: 'var(--ink-muted)' }}>
-                  Progress
-                </p>
+                  style={{ color: 'var(--ink-muted)' }}>Progress</p>
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full border-2 transition-colors duration-500 ${
-                      scrollCompleted ? '' : ''
-                    }`} style={{
-                      background: scrollCompleted ? 'var(--accent-amber)' : 'transparent',
-                      borderColor: scrollCompleted ? 'var(--accent-amber)' : 'var(--parchment-border)'
-                    }} />
+                    <div className="w-3 h-3 rounded-full border-2 transition-colors duration-500"
+                      style={{
+                        background: scrollCompleted ? 'var(--accent-amber)' : 'transparent',
+                        borderColor: scrollCompleted ? 'var(--accent-amber)' : 'var(--parchment-border)'
+                      }} />
                     <p className="text-sm" style={{ color: 'var(--ink-light)' }}>Read</p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -329,7 +356,6 @@ export default function ChapterPage() {
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
 
@@ -338,8 +364,7 @@ export default function ChapterPage() {
             style={{ borderLeft: '1px solid var(--parchment-border)' }}>
 
             {blocks.length === 0 ? (
-              <p className="text-center py-16 text-lg"
-                style={{ color: 'var(--ink-muted)' }}>
+              <p className="text-center py-16 text-lg" style={{ color: 'var(--ink-muted)' }}>
                 Content coming soon.
               </p>
             ) : (
@@ -354,12 +379,9 @@ export default function ChapterPage() {
                         viewport={{ once: true }}
                         className="flex items-center justify-center gap-6 py-2"
                       >
-                        <div className="h-px flex-1"
-                          style={{ background: 'var(--parchment-border)' }} />
-                        <span className="text-sm"
-                          style={{ color: 'var(--accent-amber-dim)' }}>✦</span>
-                        <div className="h-px flex-1"
-                          style={{ background: 'var(--parchment-border)' }} />
+                        <div className="h-px flex-1" style={{ background: 'var(--parchment-border)' }} />
+                        <span className="text-sm" style={{ color: 'var(--accent-amber-dim)' }}>✦</span>
+                        <div className="h-px flex-1" style={{ background: 'var(--parchment-border)' }} />
                       </motion.div>
                     )}
                     <motion.div
@@ -370,68 +392,42 @@ export default function ChapterPage() {
                       transition={{ duration: 0.7 }}
                     >
                       {block.type === 'paragraph' && (
-                        <p
-                          className={`text-xl leading-[1.9] ${i === 0 ? 'drop-cap' : ''}`}
-                          style={{
-                            color: 'var(--ink-dark)',
-                            fontFamily: "'EB Garamond', serif"
-                          }}
-                        >
+                        <p className={`text-xl leading-[1.9] ${i === 0 ? 'drop-cap' : ''}`}
+                          style={{ color: 'var(--ink-dark)', fontFamily: "'EB Garamond', serif" }}>
                           {block.text}
                         </p>
                       )}
-
                       {block.type === 'fact' && (
                         <div className="px-8 py-6"
-                          style={{
-                            background: 'var(--parchment-mid)',
-                            borderLeft: '3px solid var(--accent-amber)',
-                          }}>
+                          style={{ background: 'var(--parchment-mid)', borderLeft: '3px solid var(--accent-amber)' }}>
                           <p className="text-xs tracking-[0.3em] uppercase mb-3"
-                            style={{ color: 'var(--accent-amber)' }}>
-                            {block.title}
-                          </p>
+                            style={{ color: 'var(--accent-amber)' }}>{block.title}</p>
                           <p className="text-xl leading-relaxed"
-                            style={{
-                              color: 'var(--ink-medium)',
-                              fontFamily: "'EB Garamond', serif"
-                            }}>
+                            style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
                             {block.text}
                           </p>
                         </div>
                       )}
-
                       {block.type === 'image' && (
                         <div>
-                          <img
-                            src={block.url}
-                            alt={block.caption}
-                            className="w-full object-cover mb-4"
-                          />
+                          <img src={block.url} alt={block.caption} className="w-full object-cover mb-4" />
                           <p className="text-base text-center italic mt-3"
                             style={{ color: 'var(--ink-muted)', fontFamily: "'EB Garamond', serif" }}>
                             {block.caption}
                           </p>
                         </div>
                       )}
-
                       {block.type === 'timeline' && (
                         <div className="pl-8 py-4"
                           style={{ borderLeft: '2px solid var(--parchment-border)' }}>
                           <p className="text-sm tracking-widest uppercase font-bold mb-3"
-                            style={{ color: 'var(--accent-amber)' }}>
-                            {block.date}
-                          </p>
+                            style={{ color: 'var(--accent-amber)' }}>{block.date}</p>
                           <p className="text-xl leading-relaxed"
-                            style={{
-                              color: 'var(--ink-dark)',
-                              fontFamily: "'EB Garamond', serif"
-                            }}>
+                            style={{ color: 'var(--ink-dark)', fontFamily: "'EB Garamond', serif" }}>
                             {block.evnt}
                           </p>
                         </div>
                       )}
-
                       {block.type === 'quote' && (
                         <div className="py-10 my-4 text-center"
                           style={{
@@ -439,16 +435,11 @@ export default function ChapterPage() {
                             borderBottom: '1px solid var(--parchment-border)'
                           }}>
                           <p className="text-2xl md:text-3xl italic leading-relaxed mb-4"
-                            style={{
-                              color: 'var(--ink-medium)',
-                              fontFamily: "'EB Garamond', serif"
-                            }}>
+                            style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
                             "{block.text}"
                           </p>
                           <p className="text-sm tracking-[0.3em] uppercase"
-                            style={{ color: 'var(--ink-muted)' }}>
-                            — {block.source}
-                          </p>
+                            style={{ color: 'var(--ink-muted)' }}>— {block.source}</p>
                         </div>
                       )}
                     </motion.div>
@@ -457,10 +448,9 @@ export default function ChapterPage() {
               </div>
             )}
 
-            {/* Scroll completion */}
             <div ref={bottomRef} className="mt-24">
               <AnimatePresence>
-                {scrollCompleted && !showQuiz && !quizPassed && (
+                {scrollCompleted && !showQuiz && (
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -469,54 +459,67 @@ export default function ChapterPage() {
                     className="text-center pt-16"
                     style={{ borderTop: '1px solid var(--parchment-border)' }}
                   >
-                    <motion.p
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="text-sm tracking-[0.4em] uppercase mb-4"
-                      style={{ color: 'var(--accent-amber)' }}
-                    >
-                      You have walked this trail
-                    </motion.p>
-                    <p className="text-lg mb-8"
-                      style={{ color: 'var(--ink-light)', fontFamily: "'EB Garamond', serif" }}>
-                      {chapter.hasQuiz
-                        ? 'Prove your knowledge to earn your reward.'
-                        : 'Chapter complete.'}
-                    </p>
-                    {chapter.hasQuiz && quizQuestions.length > 0 && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowQuiz(true)}
-                        className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
-                        style={{
-                          border: '1px solid var(--accent-amber-dim)',
-                          color: 'var(--ink-dark)',
-                          background: 'var(--parchment-mid)',
-                          fontFamily: "'Cinzel', serif"
-                        }}
-                      >
-                        Test Your Knowledge →
-                      </motion.button>
+                    {quizPassed ? (
+                      <>
+                        <p className="text-xl tracking-[0.4em] uppercase mb-3"
+                          style={{ color: '#ca8a04', fontFamily: "'Cinzel', serif", fontWeight: '700' }}>
+                          ★ Chapter Complete
+                        </p>
+                        <p className="text-lg mb-8"
+                          style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
+                          You have mastered this chapter.
+                        </p>
+                        {chapter.hasQuiz && quizQuestions.length > 0 && !hasEarnedRare && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => { resetQuiz(); setShowQuiz(true) }}
+                            className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+                            style={{
+                              border: '1px solid #3b82f680',
+                              color: '#60a5fa',
+                              background: 'transparent',
+                              fontFamily: "'Cinzel', serif"
+                            }}
+                          >
+                            Retry for Rare ◈
+                          </motion.button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <motion.p
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                          className="text-sm tracking-[0.4em] uppercase mb-4"
+                          style={{ color: 'var(--accent-amber)' }}
+                        >
+                          You have walked this trail
+                        </motion.p>
+                        <p className="text-lg mb-8"
+                          style={{ color: 'var(--ink-light)', fontFamily: "'EB Garamond', serif" }}>
+                          {chapter.hasQuiz
+                            ? 'Prove your knowledge to earn your reward.'
+                            : 'Chapter complete.'}
+                        </p>
+                        {chapter.hasQuiz && quizQuestions.length > 0 && (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setShowQuiz(true)}
+                            className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+                            style={{
+                              border: '1px solid var(--accent-amber-dim)',
+                              color: 'var(--ink-dark)',
+                              background: 'var(--parchment-mid)',
+                              fontFamily: "'Cinzel', serif"
+                            }}
+                          >
+                            Test Your Knowledge →
+                          </motion.button>
+                        )}
+                      </>
                     )}
-                  </motion.div>
-                )}
-
-                {quizPassed && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-center pt-16"
-                    style={{ borderTop: '1px solid var(--parchment-border)' }}
-                  >
-<p className="text-xl tracking-[0.4em] uppercase mb-3"
-  style={{ color: '#ca8a04', fontFamily: "'Cinzel', serif", fontWeight: '700' }}>
-  ★ Chapter Complete
-</p>
-<p className="text-xl"
-  style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
-                      You have mastered this chapter.
-                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -525,7 +528,7 @@ export default function ChapterPage() {
         </div>
       </div>
 
-      {/* Quiz overlay — dark cinematic */}
+      {/* Quiz overlay */}
       <AnimatePresence>
         {showQuiz && !quizComplete && (
           <motion.div
@@ -540,7 +543,7 @@ export default function ChapterPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
               onClick={() => { setShowQuiz(false); resetQuiz() }}
-              className="absolute top-6 right-6 text-sm tracking-widest uppercase cursor-pointer transition-colors duration-300"
+              className="absolute top-6 right-6 text-sm tracking-widest uppercase cursor-pointer"
               style={{ color: 'var(--ink-muted)' }}
             >
               ✕ Close
@@ -548,23 +551,19 @@ export default function ChapterPage() {
 
             <div className="w-full max-w-2xl">
               <div className="flex items-center justify-between mb-10">
-                <p className="text-sm tracking-widest uppercase"
-                  style={{ color: 'var(--ink-muted)' }}>
+                <p className="text-sm tracking-widest uppercase" style={{ color: 'var(--ink-muted)' }}>
                   Question {currentQuestion + 1} of {quizQuestions.length}
                 </p>
                 <div className="flex gap-2">
                   {quizQuestions.map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-2.5 h-2.5 rounded-full transition-all duration-500"
+                    <div key={i} className="w-2.5 h-2.5 rounded-full transition-all duration-500"
                       style={{
                         background: i < currentQuestion
                           ? answers[i] === true ? '#4ade80' : '#f87171'
                           : i === currentQuestion
                           ? 'var(--accent-amber)'
                           : 'var(--parchment-border)'
-                      }}
-                    />
+                      }} />
                   ))}
                 </div>
               </div>
@@ -578,10 +577,7 @@ export default function ChapterPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <h2 className="text-3xl md:text-4xl font-bold mb-12 leading-relaxed"
-                    style={{
-                      color: 'var(--parchment-light)',
-                      fontFamily: "'Cinzel', serif"
-                    }}>
+                    style={{ color: 'var(--parchment-light)', fontFamily: "'Cinzel', serif" }}>
                     {quizQuestions[currentQuestion]?.text}
                   </h2>
 
@@ -594,15 +590,14 @@ export default function ChapterPage() {
                           whileHover={!selectedAnswer ? { scale: 1.01 } : {}}
                           whileTap={!selectedAnswer ? { scale: 0.99 } : {}}
                           onClick={() => handleAnswer(option)}
-                          className={`flex items-center gap-4 p-5 text-left ${getOptionClass(option)}`}
+                          className="flex items-center gap-4 p-5 text-left transition-all duration-300"
                           style={getOptionStyle(option)}
                         >
                           <span className="text-sm tracking-widest shrink-0"
                             style={{ color: 'var(--accent-amber-dim)', fontFamily: "'Cinzel', serif" }}>
                             {option}
                           </span>
-                          <span className="text-lg"
-                            style={{ fontFamily: "'EB Garamond', serif" }}>
+                          <span className="text-lg" style={{ fontFamily: "'EB Garamond', serif" }}>
                             {quizQuestions[currentQuestion]?.[optionKey] as string}
                           </span>
                         </motion.button>
@@ -644,9 +639,7 @@ export default function ChapterPage() {
               className="text-center max-w-md"
             >
               <p className="text-sm tracking-[0.4em] uppercase mb-8"
-                style={{ color: 'var(--ink-muted)' }}>
-                Results
-              </p>
+                style={{ color: 'var(--ink-muted)' }}>Results</p>
               <p className="text-8xl font-bold mb-4"
                 style={{
                   color: passed ? 'var(--accent-amber)' : 'var(--ink-muted)',
@@ -654,6 +647,19 @@ export default function ChapterPage() {
                 }}>
                 {score}/{quizQuestions.length}
               </p>
+
+              {perfectScore && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-sm tracking-[0.4em] uppercase mb-3"
+                  style={{ color: '#3b82f6', fontFamily: "'Cinzel', serif" }}
+                >
+                  ◈ Perfect Score — Rare Collectible Earned
+                </motion.p>
+              )}
+
               <p className="text-2xl mb-3"
                 style={{
                   color: passed ? 'var(--parchment-light)' : 'var(--ink-muted)',
@@ -662,10 +668,7 @@ export default function ChapterPage() {
                 {passed ? 'Excellent' : 'Not quite'}
               </p>
               <p className="text-lg mb-16"
-                style={{
-                  color: 'var(--ink-muted)',
-                  fontFamily: "'EB Garamond', serif"
-                }}>
+                style={{ color: 'var(--ink-muted)', fontFamily: "'EB Garamond', serif" }}>
                 {passed
                   ? 'You have proven your knowledge of this era.'
                   : 'The trail is long. Study and try again.'}
@@ -675,7 +678,7 @@ export default function ChapterPage() {
                 {!passed && (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
-                    onClick={resetQuiz}
+                    onClick={() => { resetQuiz(); setShowQuiz(true) }}
                     className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
                     style={{
                       border: '1px solid var(--parchment-border)',
@@ -684,6 +687,21 @@ export default function ChapterPage() {
                     }}
                   >
                     Try Again
+                  </motion.button>
+                )}
+                {passed && !perfectScore && !hasEarnedRare && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    onClick={() => { resetQuiz(); setShowQuiz(true) }}
+                    className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                    style={{
+                      border: '1px solid #3b82f680',
+                      color: '#60a5fa',
+                      background: 'transparent',
+                      fontFamily: "'Cinzel', serif"
+                    }}
+                  >
+                    Retry for Rare ◈
                   </motion.button>
                 )}
                 <motion.button
@@ -704,7 +722,7 @@ export default function ChapterPage() {
         )}
       </AnimatePresence>
 
-      {/* Collectible reward */}
+      {/* Reward screen */}
       <AnimatePresence>
         {showReward && (
           <motion.div
@@ -713,7 +731,9 @@ export default function ChapterPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-xl"
             style={{
-              background: 'radial-gradient(ellipse at center, rgba(180,120,30,0.15) 0%, rgba(13,10,6,0.97) 60%)'
+              background: earnedRare
+                ? 'radial-gradient(ellipse at center, rgba(59,130,246,0.15) 0%, rgba(13,10,6,0.97) 60%)'
+                : 'radial-gradient(ellipse at center, rgba(180,120,30,0.15) 0%, rgba(13,10,6,0.97) 60%)'
             }}
           >
             <div className="text-center max-w-sm">
@@ -721,17 +741,17 @@ export default function ChapterPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-sm tracking-[0.5em] uppercase mb-8"
+                className="text-sm tracking-[0.5em] uppercase mb-3"
                 style={{ color: 'var(--accent-amber)', opacity: 0.7 }}
               >
-                Reward Unlocked
+                {earnedRare ? 'Rewards Unlocked' : 'Reward Unlocked'}
               </motion.p>
 
               <motion.div
                 initial={{ scale: 0, opacity: 0, y: 40 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
-                className="relative inline-block mb-8"
+                className="relative inline-block mb-6"
               >
                 <motion.div
                   animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.15, 1] }}
@@ -739,14 +759,14 @@ export default function ChapterPage() {
                   className="absolute inset-0 rounded-full blur-2xl"
                   style={{ background: 'rgba(212,168,83,0.25)' }}
                 />
-                <div className="relative w-64 h-64 rounded-full overflow-hidden"
+                <div className="relative w-48 h-48 rounded-full overflow-hidden"
                   style={{
                     border: '2px solid var(--accent-amber)',
-                    boxShadow: '0 0 60px rgba(212,168,83,0.3)'
+                    boxShadow: '0 0 40px rgba(212,168,83,0.3)'
                   }}>
                   <img
-                    src="/images/collectibles/trex.jpg"
-                    alt="T-Rex Collectible"
+                    src={chapter.collectibleImageUrl ?? '/images/collectibles/trex.jpg'}
+                    alt="Common Collectible"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -755,47 +775,111 @@ export default function ChapterPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1, duration: 0.6 }}
-                className="px-8 py-6"
+                transition={{ delay: 0.9, duration: 0.6 }}
+                className="px-6 py-5 mb-6"
                 style={{
                   background: 'rgba(13,10,6,0.8)',
                   border: '1px solid var(--accent-amber-dim)',
                   backdropFilter: 'blur(8px)'
                 }}
               >
-                <p className="text-2xl font-bold mb-2"
+                <p className="text-xl font-bold mb-1"
                   style={{ color: 'var(--parchment-light)', fontFamily: "'Cinzel', serif" }}>
-                  T-Rex
+                  {chapter.collectibleName ?? 'Collectible Earned'}
                 </p>
-                <p className="text-xs tracking-[0.3em] uppercase mb-4"
+                <p className="text-xs tracking-[0.3em] uppercase mb-3"
                   style={{ color: 'var(--ink-muted)' }}>
                   Common Collectible
                 </p>
-                <p className="text-base mb-8 leading-relaxed"
-                  style={{
-                    color: 'var(--parchment-dark)',
-                    fontFamily: "'EB Garamond', serif"
-                  }}>
-                  The apex predator of the prehistoric era. Earned by those who walked the trail and proved their knowledge.
+                <p className="text-sm leading-relaxed"
+                  style={{ color: 'var(--parchment-dark)', fontFamily: "'EB Garamond', serif" }}>
+                  {chapter.collectibleDescription ?? ''}
                 </p>
-
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.5 }}
-                  whileHover={{ scale: 1.05 }}
-                  onClick={() => navigate(-1)}
-                  className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
-                  style={{
-                    border: '1px solid var(--accent-amber)',
-                    color: 'var(--accent-amber)',
-                    background: 'transparent',
-                    fontFamily: "'Cinzel', serif"
-                  }}
-                >
-                  Continue The Trail →
-                </motion.button>
               </motion.div>
+
+              {earnedRare && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.4 }}
+                    className="flex items-center gap-3 mb-6"
+                  >
+                    <div className="h-px flex-1" style={{ backgroundColor: '#3b82f640' }} />
+                    <span style={{ color: '#60a5fa', fontSize: '0.8rem', fontFamily: "'Cinzel', serif" }}>
+                      ◈ PERFECT SCORE BONUS
+                    </span>
+                    <div className="h-px flex-1" style={{ backgroundColor: '#3b82f640' }} />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0, y: 40 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    transition={{ delay: 1.6, duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+                    className="relative inline-block mb-6"
+                  >
+                    <motion.div
+                      animate={{ opacity: [0.4, 0.9, 0.4], scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                      className="absolute inset-0 rounded-full blur-2xl"
+                      style={{ background: 'rgba(59,130,246,0.35)' }}
+                    />
+                    <div className="relative w-48 h-48 rounded-full overflow-hidden"
+                      style={{
+                        border: '2px solid #3b82f6',
+                        boxShadow: '0 0 50px rgba(59,130,246,0.4)'
+                      }}>
+                      <img
+                        src={chapter.rareCollectibleImageUrl ?? '/images/collectibles/amber-fossil.jpg'}
+                        alt="Rare Collectible"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 2, duration: 0.6 }}
+                    className="px-6 py-5 mb-6"
+                    style={{
+                      background: 'rgba(13,10,6,0.8)',
+                      border: '1px solid #3b82f660',
+                      backdropFilter: 'blur(8px)'
+                    }}
+                  >
+                    <p className="text-xl font-bold mb-1"
+                      style={{ color: '#93c5fd', fontFamily: "'Cinzel', serif" }}>
+                      {chapter.rareCollectibleName ?? 'Rare Collectible'}
+                    </p>
+                    <p className="text-xs tracking-[0.3em] uppercase mb-3"
+                      style={{ color: '#3b82f6' }}>
+                      Rare Collectible
+                    </p>
+                    <p className="text-sm leading-relaxed"
+                      style={{ color: 'var(--parchment-dark)', fontFamily: "'EB Garamond', serif" }}>
+                      {chapter.rareCollectibleDescription ?? ''}
+                    </p>
+                  </motion.div>
+                </>
+              )}
+
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: earnedRare ? 2.4 : 1.4 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => navigate(-1)}
+                className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                style={{
+                  border: '1px solid var(--accent-amber)',
+                  color: 'var(--accent-amber)',
+                  background: 'transparent',
+                  fontFamily: "'Cinzel', serif"
+                }}
+              >
+                Continue The Trail →
+              </motion.button>
             </div>
           </motion.div>
         )}
