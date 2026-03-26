@@ -40,6 +40,13 @@ const eraThemes: Record<string, {
     text: 'text-indigo-100',
     image: '/images/eras/RenaissanceEra.png'
   },
+  exploration: {
+    bg: 'from-emerald-950 via-teal-900 to-stone-900',
+    accentClass: 'text-emerald-400',
+    accentColor: '#34d399',
+    text: 'text-emerald-100',
+    image: '/images/eras/ExplorationEra.png'
+  },
   modern: {
     bg: 'from-zinc-900 via-zinc-800 to-stone-900',
     accentClass: 'text-zinc-300',
@@ -113,7 +120,7 @@ export default function EraPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--hero-dark)' }}>
 
-      {/* ── Era Hero — dark cinematic ── */}
+      {/* ── Era Hero ── */}
       <div className="relative h-[65vh] flex flex-col items-center justify-end pb-16 px-4">
         {theme.image && (
           <img
@@ -175,11 +182,10 @@ export default function EraPage() {
         </div>
       </div>
 
-      {/* ── Chapter List — parchment ── */}
+      {/* ── Chapter List ── */}
       <div className="parchment">
         <div className="max-w-4xl mx-auto px-8 py-16">
 
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -209,7 +215,6 @@ export default function EraPage() {
             )}
           </motion.div>
 
-          {/* Empty state */}
           {chapters.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -246,7 +251,6 @@ export default function EraPage() {
                 >
                   <div className="p-6 flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                      {/* Chapter number */}
                       <p className="text-3xl font-bold"
                         style={{
                           color: theme.accentColor,
@@ -255,8 +259,6 @@ export default function EraPage() {
                         }}>
                         {String(chapter.order).padStart(2, '0')}
                       </p>
-
-                      {/* Chapter info */}
                       <div>
                         <h3 className="text-xl font-bold mb-1 transition-colors duration-300"
                           style={{
@@ -276,7 +278,6 @@ export default function EraPage() {
                     </div>
 
                     <div className="flex items-center gap-6 shrink-0">
-                      {/* Meta */}
                       <div className="text-right hidden md:block">
                         <p className="text-sm mb-1"
                           style={{ color: 'var(--ink-muted)' }}>
@@ -297,7 +298,6 @@ export default function EraPage() {
                         </div>
                       </div>
 
-                      {/* Progress dots */}
                       <div className="flex flex-col items-center gap-2">
                         <div className="w-3 h-3 rounded-full border-2 transition-colors duration-500"
                           style={{
@@ -311,7 +311,6 @@ export default function EraPage() {
                           }} />
                       </div>
 
-                      {/* Enter arrow */}
                       <p className="text-sm tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         style={{ color: theme.accentColor, fontFamily: "'Cinzel', serif" }}>
                         Enter →

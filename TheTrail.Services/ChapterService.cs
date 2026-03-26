@@ -48,7 +48,6 @@ namespace TheTrail.Services
             }
             else
             {
-                // Only upgrade — never downgrade a previously passed quiz
                 if (passed) progress.QuizPassed = true;
                 await _progressRepository.UpdateAsync(progress);
             }
@@ -73,7 +72,7 @@ namespace TheTrail.Services
                         await _userCollectibleRepository.AddAsync(new UserCollectible
                         {
                             UserId = userId,
-                            CollectibleId = commonCollectible.Id,
+                            CollectibleId = commonCollectible.Id,  // ← fixed
                             EarnedOn = DateTime.UtcNow
                         });
                     }
@@ -105,6 +104,16 @@ namespace TheTrail.Services
                         });
                     }
                 }
+            }
+
+            // ── Check if era is now Grandmaster → award Legendary ───────────
+            Chapter? chapter = await _chapterRepository
+                .AllAsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == chapterId);
+
+            if (chapter != null)
+            {
+                await AwardLegendaryIfEarnedAsync(chapter.EraId, userId);
             }
         }
 
@@ -261,6 +270,53 @@ namespace TheTrail.Services
             if (question == null) return false;
 
             return question.CorrectOption.Equals(answer, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public async Task<bool> CheckEraGrandmasterAsync(int eraId, string userId)
+        {
+            List<int> chapterIds = await _chapterRepository
+                .AllAsNoTracking()
+                .Where(c => c.EraId == eraId && c.IsPublished)
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            if (chapterIds.Count == 0) return false;
+
+            int completedCount = await _progressRepository
+                .AllAsNoTracking()
+                .CountAsync(p => p.UserId == userId
+                              && chapterIds.Contains(p.ChapterId)
+                              && p.QuizPassed);
+
+            return completedCount >= chapterIds.Count;
+        }
+
+        public async Task AwardLegendaryIfEarnedAsync(int eraId, string userId)
+        {
+            bool isGrandmaster = await CheckEraGrandmasterAsync(eraId, userId);
+            if (!isGrandmaster) return;
+
+            Collectible? legendary = await _collectibleRepository
+                .AllAsNoTracking()
+                .FirstOrDefaultAsync(c => c.EraId == eraId
+                                       && c.Rarity == Domain.Enums.Rarity.Legendary);
+
+            if (legendary == null) return;
+
+            bool alreadyEarned = await _userCollectibleRepository
+                .AllAsNoTracking()
+                .AnyAsync(uc => uc.UserId == userId
+                             && uc.CollectibleId == legendary.Id);
+
+            if (!alreadyEarned)
+            {
+                await _userCollectibleRepository.AddAsync(new UserCollectible
+                {
+                    UserId = userId,
+                    CollectibleId = legendary.Id,
+                    EarnedOn = DateTime.UtcNow
+                });
+            }
         }
 
         private ChapterDto MapToDto(Chapter chapter, string? userId)

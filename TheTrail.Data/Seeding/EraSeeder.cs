@@ -51,10 +51,19 @@ namespace TheTrail.Data.Seeding
                 },
                 new Era
                 {
+                    Name = "Age of Exploration",
+                    Description = "The age of discovery — when Europeans sailed beyond the horizon and connected the world's civilisations for the first time.",
+                    ColorTheme = "exploration",
+                    Order = 5,
+                    IsPublished = true,
+                    CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Era
+                {
                     Name = "Modern History",
                     Description = "Revolutions, world wars, independence movements — the turbulent birth of the world we live in today.",
                     ColorTheme = "modern",
-                    Order = 5,
+                    Order = 6,
                     IsPublished = true,
                     CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 },
@@ -63,7 +72,7 @@ namespace TheTrail.Data.Seeding
                     Name = "Digital Age",
                     Description = "The internet, artificial intelligence, space exploration — humanity's most rapid transformation in history.",
                     ColorTheme = "digital",
-                    Order = 6,
+                    Order = 7,
                     IsPublished = true,
                     CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 }

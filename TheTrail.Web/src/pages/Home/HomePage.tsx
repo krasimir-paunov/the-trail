@@ -39,6 +39,13 @@ const eraThemes: Record<string, {
     description: 'The rebirth of human thought',
     image: '/images/eras/RenaissanceEra.png'
   },
+  exploration: {
+    bg: 'from-emerald-950 via-teal-900 to-stone-900',
+    accent: 'text-emerald-400',
+    text: 'text-emerald-100',
+    description: 'Beyond the edge of the known world',
+    image: '/images/eras/ExplorationEra.png'
+  },
   modern: {
     bg: 'from-zinc-900 via-zinc-800 to-stone-900',
     accent: 'text-zinc-300',
@@ -100,7 +107,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--hero-dark)' }}>
 
-      {/* ── Hero Section — dark cinematic ── */}
+      {/* ── Hero Section ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -182,7 +189,7 @@ export default function HomePage() {
         </motion.div>
       </motion.div>
 
-      {/* ── Era Accordion — dark cinematic ── */}
+      {/* ── Era Accordion ── */}
       <div id="eras">
         <motion.h2
           initial={{ opacity: 0 }}
@@ -288,7 +295,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── How It Works — parchment ── */}
+      {/* ── How It Works ── */}
       <div className="parchment">
         <div className="max-w-4xl mx-auto px-4 py-24">
           <motion.p
@@ -320,7 +327,7 @@ export default function HomePage() {
               {
                 number: 'I',
                 title: 'Choose Your Era',
-                description: 'Select from six distinct eras of human history. Each era is a world unto itself — visually unique, historically rich.'
+                description: 'Select from seven distinct eras of human history. Each era is a world unto itself — visually unique, historically rich.'
               },
               {
                 number: 'II',

@@ -10,6 +10,7 @@ namespace TheTrail.Data.Seeding.Chapters
             await AncientChapterSeeder.SeedAsync(context);
             await MedievalChapterSeeder.SeedAsync(context);
             await RenaissanceChapterSeeder.SeedAsync(context);
+            await ExplorationChapterSeeder.SeedAsync(context);
             await ModernChapterSeeder.SeedAsync(context);
             await DigitalChapterSeeder.SeedAsync(context);
         }

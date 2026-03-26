@@ -27,6 +27,19 @@ namespace TheTrail.Data.Configuration
                 .IsRequired()
                 .HasConversion<string>();
 
+            builder.HasOne(c => c.Chapter)
+                .WithMany(ch => ch.Collectibles)
+                .HasForeignKey(c => c.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+
+            builder.HasOne(c => c.Era)
+                .WithMany(e => e.Collectibles)
+                .HasForeignKey(c => c.EraId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
             builder.HasMany(c => c.UserCollectibles)
                 .WithOne(uc => uc.Collectible)
                 .HasForeignKey(uc => uc.CollectibleId)

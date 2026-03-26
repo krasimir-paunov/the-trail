@@ -96,7 +96,7 @@ namespace TheTrail.Services
             ImageUrl = c.ArtworkUrl ?? string.Empty,
             Rarity = c.Rarity.ToString(),
             IsEarned = isEarned,
-            ChapterId = c.ChapterId
+            ChapterId = c.ChapterId ?? 0
         };
     }
 }
