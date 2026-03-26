@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Compass, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.tsx'
 
 type NavStyle = 'fullscreen' | 'drawer'
@@ -13,6 +13,7 @@ interface NavbarProps {
 export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -35,19 +36,57 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
 
   return (
     <>
-      {/* Trigger button */}
+      {/* ── Trigger button — large compass rose with glow on hover ── */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        animate={{ opacity: isOpen ? 0 : 1 }}
-        className="fixed top-6 right-6 z-50 p-3 bg-transparent cursor-pointer"
+        animate={{ opacity: isOpen ? 0 : 1, pointerEvents: isOpen ? 'none' : 'auto' }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        whileTap={{ scale: 0.92 }}
+        className="fixed top-4 right-4 z-50 cursor-pointer"
+        style={{ background: 'none', border: 'none', padding: 0, width: '72px', height: '72px' }}
       >
-        <Compass
-          size={28}
-          className={`transition-all duration-300 cursor-pointer ${
-            scrolled
-              ? 'text-amber-200 hover:text-amber-50'
-              : 'text-amber-200/60 hover:text-amber-200'
-          }`}
+        {/* Glow ring behind image — animates on hover */}
+        <motion.div
+          animate={{
+            opacity: hovered ? 1 : 0,
+            scale: hovered ? 1.15 : 0.9,
+          }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          style={{
+            position: 'absolute',
+            inset: '-8px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(212,168,83,0.35) 0%, transparent 70%)',
+            filter: 'blur(8px)',
+            pointerEvents: 'none',
+          }}
+        />
+        {/* Secondary tight glow */}
+        <motion.div
+          animate={{ opacity: hovered ? 0.8 : 0 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            position: 'absolute',
+            inset: '0',
+            borderRadius: '50%',
+            boxShadow: '0 0 24px 8px rgba(212,168,83,0.4)',
+            pointerEvents: 'none',
+          }}
+        />
+        <motion.img
+          src="/images/nav-button.png"
+          alt="Navigation"
+          animate={{
+            scale: hovered ? 1.08 : 1,
+            filter: hovered
+              ? 'brightness(1.3) drop-shadow(0 0 12px rgba(212,168,83,0.7))'
+              : scrolled
+                ? 'brightness(1.0) drop-shadow(0 0 6px rgba(212,168,83,0.3))'
+                : 'brightness(0.85) drop-shadow(0 0 4px rgba(212,168,83,0.2))',
+          }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
         />
       </motion.button>
 
@@ -55,7 +94,6 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
         {isOpen && (
           <>
             {style === 'fullscreen' ? (
-              // ── OPTION A — Fullscreen overlay ──────────────────────────
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -63,18 +101,13 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                 transition={{ duration: 0.4 }}
                 className="fixed inset-0 z-40 flex flex-col items-center justify-center"
               >
-                {/* Background */}
                 <div className="absolute inset-0">
-                  <img
-                    src="/images/HeroMap.jpg"
-                    alt=""
+                  <img src="/images/HeroMap.jpg" alt=""
                     className="w-full h-full object-cover"
-                    style={{ objectPosition: '50% 40%' }}
-                  />
+                    style={{ objectPosition: '50% 40%' }} />
                   <div className="absolute inset-0 bg-black/85" />
                 </div>
 
-                {/* Close button */}
                 <motion.button
                   initial={{ opacity: 0, rotate: -90 }}
                   animate={{ opacity: 1, rotate: 0 }}
@@ -86,7 +119,6 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   <X size={24} />
                 </motion.button>
 
-                {/* Logo */}
                 <motion.p
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -106,15 +138,11 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   The Trail
                 </motion.h1>
 
-                {/* Nav links */}
                 <nav className="relative z-10 flex flex-col items-center gap-6">
                   {[
                     { label: 'Home', path: '/' },
                     { label: 'Explore Eras', path: '/#eras' },
-                    ...(isAuthenticated
-                      ? [{ label: 'My Profile', path: '/profile' }]
-                      : []
-                    ),
+                    ...(isAuthenticated ? [{ label: 'My Profile', path: '/profile' }] : []),
                   ].map((link, i) => (
                     <motion.button
                       key={link.path}
@@ -129,7 +157,6 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   ))}
                 </nav>
 
-                {/* Auth */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -141,25 +168,19 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                       <span className="text-stone-500 text-sm tracking-widest uppercase self-center">
                         {user?.displayName}
                       </span>
-                      <button
-                        onClick={handleLogout}
-                        className="px-6 py-2 border border-stone-600 text-stone-400 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all duration-300 cursor-pointer"
-                      >
+                      <button onClick={handleLogout}
+                        className="px-6 py-2 border border-stone-600 text-stone-400 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all duration-300 cursor-pointer">
                         Logout
                       </button>
                     </>
                   ) : (
                     <>
-                      <button
-                        onClick={() => handleNavigate('/login')}
-                        className="px-6 py-2 text-stone-400 text-sm tracking-widest uppercase hover:text-amber-200 transition-colors duration-300 cursor-pointer"
-                      >
+                      <button onClick={() => handleNavigate('/login')}
+                        className="px-6 py-2 text-stone-400 text-sm tracking-widest uppercase hover:text-amber-200 transition-colors duration-300 cursor-pointer">
                         Login
                       </button>
-                      <button
-                        onClick={() => handleNavigate('/register')}
-                        className="px-6 py-2 border border-amber-200/30 text-amber-200/70 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all duration-300 cursor-pointer"
-                      >
+                      <button onClick={() => handleNavigate('/register')}
+                        className="px-6 py-2 border border-amber-200/30 text-amber-200/70 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all duration-300 cursor-pointer">
                         Begin Your Journey
                       </button>
                     </>
@@ -167,9 +188,7 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                 </motion.div>
               </motion.div>
             ) : (
-              // ── OPTION B — Side drawer ──────────────────────────────────
               <>
-                {/* Backdrop */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -177,8 +196,6 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   onClick={() => setIsOpen(false)}
                   className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm cursor-pointer"
                 />
-
-                {/* Drawer */}
                 <motion.div
                   initial={{ x: '100%' }}
                   animate={{ x: 0 }}
@@ -186,47 +203,29 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
                   className="fixed top-0 right-0 h-full w-80 z-50 flex flex-col"
                 >
-                  {/* Background */}
                   <div className="absolute inset-0">
-                    <img
-                      src="/images/HeroMap.jpg"
-                      alt=""
+                    <img src="/images/HeroMap.jpg" alt=""
                       className="w-full h-full object-cover"
-                      style={{ objectPosition: '20% 40%' }}
-                    />
+                      style={{ objectPosition: '20% 40%' }} />
                     <div className="absolute inset-0 bg-stone-950/92" />
                   </div>
 
-                  {/* Header */}
                   <div className="relative z-10 flex justify-between items-center p-6 border-b border-stone-800">
-                    <div
-                      className="cursor-pointer"
-                      onClick={() => handleNavigate('/')}
-                    >
-                      <span className="text-amber-50 font-bold text-xl block">
-                        The Trail
-                      </span>
-                      <span className="text-amber-200/40 text-xs tracking-[0.2em] uppercase">
-                        Follow the trail
-                      </span>
+                    <div className="cursor-pointer" onClick={() => handleNavigate('/')}>
+                      <span className="text-amber-50 font-bold text-xl block">The Trail</span>
+                      <span className="text-amber-200/40 text-xs tracking-[0.2em] uppercase">Follow the trail</span>
                     </div>
-                    <button
-                      onClick={() => setIsOpen(false)}
-                      className="text-stone-400 hover:text-amber-200 transition-colors cursor-pointer"
-                    >
+                    <button onClick={() => setIsOpen(false)}
+                      className="text-stone-400 hover:text-amber-200 transition-colors cursor-pointer">
                       <X size={20} />
                     </button>
                   </div>
 
-                  {/* Links */}
                   <nav className="relative z-10 flex flex-col p-6 gap-2 flex-1">
                     {[
                       { label: 'Home', path: '/' },
                       { label: 'Explore Eras', path: '/#eras' },
-                      ...(isAuthenticated
-                        ? [{ label: 'My Profile', path: '/profile' }]
-                        : []
-                      ),
+                      ...(isAuthenticated ? [{ label: 'My Profile', path: '/profile' }] : []),
                     ].map((link, i) => (
                       <motion.button
                         key={link.path}
@@ -241,7 +240,6 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                     ))}
                   </nav>
 
-                  {/* Auth */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -250,28 +248,20 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                   >
                     {isAuthenticated ? (
                       <>
-                        <p className="text-amber-200/60 text-m tracking-wide">
-                          {user?.displayName}
-                        </p>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full py-2 border border-stone-700 text-stone-400 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all duration-300 cursor-pointer"
-                        >
+                        <p className="text-amber-200/60 text-m tracking-wide">{user?.displayName}</p>
+                        <button onClick={handleLogout}
+                          className="w-full py-2 border border-stone-700 text-stone-400 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all duration-300 cursor-pointer">
                           Logout
                         </button>
                       </>
                     ) : (
                       <>
-                        <button
-                          onClick={() => handleNavigate('/login')}
-                          className="w-full py-2 text-stone-400 text-sm tracking-widest uppercase hover:text-amber-200 transition-colors border border-stone-800 hover:border-stone-600 cursor-pointer"
-                        >
+                        <button onClick={() => handleNavigate('/login')}
+                          className="w-full py-2 text-stone-400 text-sm tracking-widest uppercase hover:text-amber-200 transition-colors border border-stone-800 hover:border-stone-600 cursor-pointer">
                           Login
                         </button>
-                        <button
-                          onClick={() => handleNavigate('/register')}
-                          className="w-full py-2 border border-amber-200/30 text-amber-200/70 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all cursor-pointer"
-                        >
+                        <button onClick={() => handleNavigate('/register')}
+                          className="w-full py-2 border border-amber-200/30 text-amber-200/70 text-sm tracking-widest uppercase hover:border-amber-200/60 hover:text-amber-200 transition-all cursor-pointer">
                           Begin Your Journey
                         </button>
                       </>

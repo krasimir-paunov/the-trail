@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react'
 import Navbar from './Navbar.tsx'
 import Footer from './Footer.tsx'
 
 interface LayoutProps {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export default function Layout({ children }: LayoutProps) {

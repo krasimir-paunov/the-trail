@@ -42,31 +42,86 @@ const eraImages: Record<string, string> = {
   digital: '/images/eras/DigitalEra.png',
 }
 
-const eraAccents: Record<string, string> = {
-  prehistoric: 'text-orange-400',
-  ancient: 'text-yellow-400',
-  medieval: 'text-red-400',
-  renaissance: 'text-purple-300',
-  modern: 'text-zinc-300',
-  digital: 'text-blue-400',
+const eraAccentColors: Record<string, string> = {
+  prehistoric: '#b03a08',
+  ancient: '#8a6a08',
+  medieval: '#7a1515',
+  renaissance: '#4a2a7a',
+  modern: '#3a3a3a',
+  digital: '#0a3a7a',
 }
 
-const rarityBorder: Record<string, string> = {
-  Common: 'border-stone-500',
-  Rare: 'border-blue-500',
-  Legendary: 'border-yellow-400',
+const eraAccentLight: Record<string, string> = {
+  prehistoric: '#fb923c',
+  ancient: '#facc15',
+  medieval: '#f87171',
+  renaissance: '#d8b4fe',
+  modern: '#d4d4d8',
+  digital: '#60a5fa',
+}
+
+const eraDescriptions: Record<string, string> = {
+  prehistoric: 'The dawn of life — from the first organisms to the rise of early man.',
+  ancient: 'Empires of stone and sand — civilisations that shaped the world.',
+  medieval: 'An age of castles, crusades, and the birth of nations.',
+  renaissance: 'When art and reason rekindled the flame of human greatness.',
+  modern: 'Revolution, industry, and the wars that forged the present.',
+  digital: 'The age of code — humanity\'s latest and fastest frontier.',
 }
 
 const rarityGlowColor: Record<string, string> = {
-  Common: 'rgba(120,110,90,0.4)',
-  Rare: 'rgba(59,130,246,0.4)',
-  Legendary: 'rgba(250,204,21,0.4)',
+  Common: 'rgba(180,150,90,0.6)',
+  Rare: 'rgba(59,130,246,0.6)',
+  Legendary: 'rgba(250,204,21,0.7)',
 }
+const rarityBorderColor: Record<string, string> = {
+  Common: '#a08060', Rare: '#3b82f6', Legendary: '#facc15',
+}
+const rarityLabel: Record<string, string> = {
+  Common: '#c4a47a', Rare: '#60a5fa', Legendary: '#facc15',
+}
+const rarityTextModal: Record<string, string> = {
+  Common: 'text-stone-400', Rare: 'text-blue-400', Legendary: 'text-yellow-400',
+}
+const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI']
 
-const rarityText: Record<string, string> = {
-  Common: 'text-stone-400',
-  Rare: 'text-blue-400',
-  Legendary: 'text-yellow-400',
+// Layout constants — all derived so SVG matches cards exactly
+const CARD_W = 580
+const CARD_H = 170
+const CARD_H_HOVER = Math.round(CARD_H * 1.55)   // 263
+const CARD_W_HOVER = Math.round(CARD_W * 1.18)    // 684
+const CONTAINER_W = 1080
+const VERTICAL_STEP = 300   // top-to-top distance
+
+// 6 cards, alternating left/right
+const ZIGZAG = Array.from({ length: 6 }, (_, i) => ({
+  side: i % 2 === 0 ? 'left' : 'right' as 'left' | 'right',
+  left: i % 2 === 0 ? 0 : CONTAINER_W - CARD_W,
+  top: i * VERTICAL_STEP,
+}))
+
+// Exact container height = last card bottom edge + small pad for compass
+const CONTAINER_H = VERTICAL_STEP * 5 + CARD_H + 60
+
+// Trail connection points: right edge of left cards, left edge of right cards
+const TRAIL_PTS = ZIGZAG.map(z => ({
+  x: z.side === 'left' ? z.left + CARD_W : z.left,
+  y: z.top + CARD_H / 2,
+}))
+
+function buildWindingPath(pts: { x: number; y: number }[]): string {
+  let d = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length; i++) {
+    const p = pts[i - 1]
+    const c = pts[i]
+    const midY = (p.y + c.y) / 2
+    const swing = CONTAINER_W * 0.4
+    const dx = c.x - p.x
+    const cp1x = p.x + (dx > 0 ? swing : -swing)
+    const cp2x = c.x + (dx > 0 ? -swing : swing)
+    d += ` C ${cp1x} ${midY - 40}, ${cp2x} ${midY + 40}, ${c.x} ${c.y}`
+  }
+  return d
 }
 
 export default function ProfilePage() {
@@ -75,209 +130,173 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedCollectible, setSelectedCollectible] = useState<CollectibleDto | null>(null)
+  const [hoveredEra, setHoveredEra] = useState<number | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login')
-      return
-    }
-
+    if (!isAuthenticated) { navigate('/login'); return }
     apiClient.get<ProfileDto>('/api/profile')
-      .then(res => {
-        setProfile(res.data)
-        setLoading(false)
-      })
+      .then(res => { setProfile(res.data); setLoading(false) })
       .catch(() => navigate('/'))
   }, [isAuthenticated, navigate])
 
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-        <motion.div
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="text-amber-200/50 text-xl tracking-widest uppercase"
-        >
-          Loading your trail...
+        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
+          style={{ fontFamily: 'Cinzel, serif', color: 'rgba(212,168,83,0.5)', fontSize: '1.2rem', letterSpacing: '0.3em' }}>
+          LOADING YOUR TRAIL...
         </motion.div>
       </div>
     )
   }
 
+  const trailPath = buildWindingPath(TRAIL_PTS)
+
+  const stats = [
+    { value: profile.chaptersRead, label: 'Chapters Read' },
+    { value: profile.quizzesPassed, label: 'Quizzes Passed' },
+    { value: profile.earnedCollectibles.length, label: 'Collectibles' },
+    { value: profile.eraProgress.filter(e => e.isGrandmasterUnlocked).length, label: 'Eras Mastered' },
+  ]
+
   return (
-    <div className="min-h-screen bg-stone-950">
+    <div className="min-h-screen" style={{ backgroundColor: '#1e1105' }}>
 
-      {/* Hero */}
-      <div className="relative min-h-[50vh] flex flex-col justify-end pb-16">
-        <div className="absolute inset-0">
-          <img
-            src="/images/HeroMap.jpg"
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ objectPosition: '50% 40%' }}
-          />
-          <div className="absolute inset-0 bg-black/75" />
-          <div
-            className="absolute inset-0"
-            style={{ background: 'radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.8) 100%)' }}
-          />
-          <div className="absolute inset-0 bg-linear-to-t from-stone-950 via-transparent to-transparent" />
-        </div>
+      {/* Fixed bg */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+        <img src="/images/profile-background.png" alt="" className="w-full h-full object-cover"
+          style={{ opacity: 0.22 }} />
+        <div className="absolute inset-0" style={{
+          background: 'radial-gradient(ellipse at 50% 30%, rgba(35,18,4,0.55) 0%, rgba(8,4,1,0.78) 100%)'
+        }} />
+      </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-8 w-full">
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-amber-200/40 text-xs tracking-[0.5em] uppercase mb-4"
-          >
-            Explorer Profile
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-bold text-amber-50 mb-3"
-          >
-            {profile.displayName}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-stone-400 text-lg mb-10"
-          >
-            {profile.email}
-          </motion.p>
+      <div className="relative" style={{ zIndex: 1 }}>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="flex gap-16 border-t border-stone-800 pt-8"
-          >
-            {[
-              { value: profile.chaptersRead, label: 'Chapters Read' },
-              { value: profile.quizzesPassed, label: 'Quizzes Passed' },
-              { value: profile.earnedCollectibles.length, label: 'Collectibles' },
-              { value: profile.eraProgress.filter(e => e.isGrandmasterUnlocked).length, label: 'Eras Mastered' },
-            ].map((stat, i) => (
-              <div key={i}>
-                <p className="text-amber-200 text-5xl font-bold mb-2">{stat.value}</p>
-                <p className="text-stone-500 text-sm tracking-[0.3em] uppercase">{stat.label}</p>
+        {/* ══ HERO ══ */}
+        <div className="flex flex-col items-center text-center px-8 pt-20 pb-24">
+          <motion.h1 initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}
+            style={{
+              fontFamily: 'Cinzel, serif', fontSize: 'clamp(2.8rem, 6vw, 5rem)', fontWeight: 700,
+              color: '#d4a853', letterSpacing: '0.16em', textTransform: 'uppercase',
+              textShadow: '0 0 50px rgba(212,168,83,0.4), 0 2px 4px rgba(0,0,0,0.9)', marginBottom: '0.6rem',
+            }}>Explorer Profile</motion.h1>
+
+          <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="flex items-center gap-3 mb-6" style={{ width: 'min(480px, 80vw)' }}>
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(212,168,83,0.35)' }} />
+            <span style={{ color: 'rgba(212,168,83,0.7)', fontFamily: 'EB Garamond, serif', fontSize: '1.3rem' }}>✦</span>
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(212,168,83,0.35)' }} />
+          </motion.div>
+
+          <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.9 }}
+            style={{
+              fontFamily: 'Cinzel, serif', fontSize: 'clamp(3.5rem, 10vw, 7.5rem)', fontWeight: 700,
+              color: '#f5e8c8', textShadow: '0 2px 40px rgba(0,0,0,0.95)', lineHeight: 1, marginBottom: '3.5rem',
+            }}>{profile.displayName}</motion.p>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.7 }} className="flex items-stretch">
+            {stats.map((stat, i) => (
+              <div key={i} className="flex items-stretch">
+                <div className="flex flex-col items-center px-10">
+                  <span style={{
+                    fontFamily: 'Cinzel, serif', fontSize: 'clamp(2.5rem, 5vw, 3.8rem)',
+                    fontWeight: 700, color: '#d4a853', lineHeight: 1, textShadow: '0 0 25px rgba(212,168,83,0.45)',
+                  }}>{stat.value}</span>
+                  <span style={{
+                    fontFamily: 'Cinzel, serif', fontSize: '0.68rem', letterSpacing: '0.28em',
+                    color: 'rgba(212,168,83,0.5)', textTransform: 'uppercase', marginTop: '0.5rem',
+                  }}>{stat.label}</span>
+                </div>
+                {i < stats.length - 1 && (
+                  <div style={{ width: '1px', backgroundColor: 'rgba(212,168,83,0.2)', margin: '4px 0' }} />
+                )}
               </div>
             ))}
           </motion.div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-8 py-24 flex flex-col gap-28">
-
-        {/* ── Trophy Cabinet ── */}
-        <section>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-4 mb-4"
-          >
-            <p className="text-amber-200/50 text-sm tracking-[0.5em] uppercase">
-              Trophy Cabinet
-            </p>
-            <div className="h-px flex-1 bg-stone-800" />
-            <p className="text-stone-500 text-base">
-              {profile.earnedCollectibles.length}
-              <span className="text-stone-700">/{profile.allCollectibles.length}</span>
+        {/* ══ TROPHY CABINET ══ */}
+        <div className="max-w-6xl mx-auto px-8 pb-32">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+            className="flex items-center gap-4 mb-3">
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(196,164,122,0.18)' }} />
+            <p style={{ color: '#c4a47a', fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.5em' }}>TROPHY CABINET</p>
+            <div className="h-px flex-1" style={{ backgroundColor: 'rgba(196,164,122,0.18)' }} />
+            <p style={{ color: 'rgba(196,164,122,0.45)', fontFamily: 'Cinzel, serif', fontSize: '0.85rem' }}>
+              {profile.earnedCollectibles.length}<span style={{ color: 'rgba(196,164,122,0.22)' }}>/{profile.allCollectibles.length}</span>
             </p>
           </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-stone-500 text-base mb-16"
-          >
+          <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+            className="text-center mb-16"
+            style={{ color: 'rgba(196,164,122,0.45)', fontFamily: 'EB Garamond, serif', fontSize: '1.1rem', fontStyle: 'italic' }}>
             Complete chapters and pass quizzes to expand your collection.
           </motion.p>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-0">
             {profile.allCollectibles.map((collectible, i) => {
-              const rarity = collectible.rarity as keyof typeof rarityBorder
-              const borderClass = rarityBorder[rarity] ?? 'border-stone-600'
-              const glowColor = rarityGlowColor[rarity] ?? 'rgba(120,110,90,0.3)'
-
+              const rarity = collectible.rarity
+              const glowColor = rarityGlowColor[rarity] ?? 'rgba(180,150,90,0.5)'
+              const borderColor = rarityBorderColor[rarity] ?? '#a08060'
+              const labelColor = rarityLabel[rarity] ?? '#c4a47a'
               return (
-                <motion.div
-                  key={collectible.id}
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, duration: 0.7 }}
-                  onClick={() => collectible.isEarned && setSelectedCollectible(collectible)}
-                  className={`relative flex flex-col items-center text-center transition-all duration-500 ${
-                    collectible.isEarned ? 'cursor-pointer group' : 'cursor-default opacity-40'
-                  }`}
-                >
-                  {/* Pedestal base */}
-                  <div className="relative w-full flex flex-col items-center">
-
-                    {/* Glow platform */}
+                <motion.div key={collectible.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.6 }}
+                  className="flex flex-col items-center" style={{ opacity: collectible.isEarned ? 1 : 0.28 }}>
+                  <div className="w-full flex flex-col items-center pt-10 pb-4 px-4 relative" style={{ minHeight: '220px' }}>
                     {collectible.isEarned && (
-                      <motion.div
-                        animate={{ opacity: [0.4, 0.8, 0.4] }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                        className="absolute bottom-8 w-32 h-4 rounded-full blur-xl"
-                        style={{ background: glowColor }}
-                      />
+                      <motion.div animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.05, 0.9] }}
+                        transition={{ duration: 3 + i * 0.3, repeat: Infinity }}
+                        className="absolute bottom-6 rounded-full blur-2xl"
+                        style={{ width: '120px', height: '30px', background: glowColor }} />
                     )}
-
-                    {/* Collectible image */}
-                    <motion.div
-                      whileHover={collectible.isEarned ? { y: -8, scale: 1.05 } : {}}
-                      transition={{ duration: 0.3 }}
-                      className={`relative w-40 h-40 rounded-full border-2 overflow-hidden mb-0 ${
-                        collectible.isEarned ? borderClass : 'border-stone-800'
-                      }`}
-                      style={collectible.isEarned ? {
-                        boxShadow: `0 0 30px ${glowColor}, 0 0 60px ${glowColor.replace('0.4', '0.2')}`
-                      } : {}}
-                    >
-                      {collectible.isEarned ? (
-                        <img
-                          src={collectible.imageUrl}
-                          alt={collectible.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-stone-900 flex items-center justify-center">
-                          <span className="text-stone-700 text-5xl font-bold">?</span>
+                    <motion.div whileHover={collectible.isEarned ? { y: -12, scale: 1.06 } : {}}
+                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                      onClick={() => collectible.isEarned && setSelectedCollectible(collectible)}
+                      className="relative w-36 h-36 rounded-full overflow-hidden border-2"
+                      style={{
+                        cursor: collectible.isEarned ? 'pointer' : 'default',
+                        borderColor: collectible.isEarned ? borderColor : 'rgba(100,80,50,0.2)',
+                        boxShadow: collectible.isEarned
+                          ? `0 0 25px ${glowColor}, 0 0 60px ${glowColor.replace('0.6', '0.2')}, inset 0 0 20px rgba(0,0,0,0.4)`
+                          : 'none',
+                      }}>
+                      {collectible.isEarned
+                        ? <img src={collectible.imageUrl} alt={collectible.name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center" style={{ background: '#1a1208' }}>
+                          <span className="text-4xl font-bold" style={{ color: 'rgba(100,80,50,0.3)', fontFamily: 'Cinzel, serif' }}>?</span>
                         </div>
-                      )}
+                      }
                     </motion.div>
-
-                    {/* Pedestal stem */}
-                    <div className="w-px h-8 bg-linear-to-b from-stone-600 to-transparent" />
-
-                    {/* Pedestal base plate */}
-                    <div className={`w-28 h-px ${collectible.isEarned ? 'bg-stone-500' : 'bg-stone-800'}`} />
-                    <div className={`w-20 h-px mt-0.5 ${collectible.isEarned ? 'bg-stone-600' : 'bg-stone-800'}`} />
+                    <div className="w-px flex-1 mt-3" style={{
+                      background: 'linear-gradient(to bottom, rgba(196,164,122,0.35), transparent)', minHeight: '24px',
+                    }} />
                   </div>
-
-                  {/* Name and rarity */}
-                  <div className="mt-4">
+                  <div className="w-full relative" style={{ height: '14px' }}>
+                    <div className="absolute inset-0" style={{
+                      background: 'linear-gradient(to bottom, #5a3818, #2d1a08)',
+                      borderTop: '1px solid #7a4f20', boxShadow: '0 4px 16px rgba(0,0,0,0.7)',
+                    }} />
+                    {[18, 42, 68, 85].map(pct => (
+                      <div key={pct} className="absolute top-0 bottom-0 w-px opacity-20"
+                        style={{ left: `${pct}%`, background: 'rgba(0,0,0,0.5)' }} />
+                    ))}
+                    <div className="absolute left-0 right-0 top-full h-8"
+                      style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.5), transparent)' }} />
+                  </div>
+                  <div className="pt-5 pb-10 text-center">
                     {collectible.isEarned ? (
                       <>
-                        <p className="text-amber-50 text-lg font-bold mb-1 group-hover:text-amber-200 transition-colors">
-                          {collectible.name}
-                        </p>
-                        <p className={`text-sm tracking-[0.3em] uppercase ${rarityText[rarity] ?? 'text-stone-400'}`}>
-                          {collectible.rarity}
-                        </p>
-                        <p className="text-stone-600 text-xs mt-2">Click to inspect</p>
+                        <p className="font-bold mb-1" style={{ color: '#e8d5a8', fontFamily: 'Cinzel, serif', fontSize: '1rem' }}>{collectible.name}</p>
+                        <p className="uppercase" style={{ color: labelColor, fontFamily: 'Cinzel, serif', fontSize: '0.7rem', letterSpacing: '0.3em' }}>{collectible.rarity}</p>
+                        <p className="mt-1" style={{ color: 'rgba(196,164,122,0.28)', fontFamily: 'EB Garamond, serif', fontSize: '0.85rem' }}>Click to inspect</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-stone-700 text-lg font-bold mb-1">???</p>
-                        <p className="text-stone-800 text-sm tracking-[0.3em] uppercase">Locked</p>
+                        <p className="font-bold mb-1" style={{ color: 'rgba(100,80,50,0.3)', fontFamily: 'Cinzel, serif', fontSize: '1rem' }}>???</p>
+                        <p className="uppercase" style={{ color: 'rgba(100,80,50,0.22)', fontFamily: 'Cinzel, serif', fontSize: '0.7rem', letterSpacing: '0.3em' }}>Locked</p>
                       </>
                     )}
                   </div>
@@ -285,183 +304,337 @@ export default function ProfilePage() {
               )
             })}
           </div>
-        </section>
+        </div>
 
-        {/* ── Era Progress ── */}
-        <section>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-4 mb-4"
-          >
-            <p className="text-amber-200/50 text-sm tracking-[0.5em] uppercase">
-              Era Progress
-            </p>
-            <div className="h-px flex-1 bg-stone-800" />
-          </motion.div>
+        {/* ══ ERA PROGRESS — Atlas ══ */}
+        <div className="px-4 pb-32">
+          <div style={{ maxWidth: '1300px', margin: '0 auto' }}>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-stone-500 text-base mb-16"
-          >
-            Complete all chapters in an era to unlock the Grandmaster badge.
-          </motion.p>
+            {/* ── The parchment atlas page (no overflow:hidden so hover cards aren't clipped) ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              style={{
+                background: 'linear-gradient(160deg, #e2c888 0%, #d8bc78 25%, #e8d090 50%, #d8bc78 75%, #ccb068 100%)',
+                boxShadow: '0 40px 100px rgba(0,0,0,0.9), 0 0 0 2px rgba(80,42,6,0.6)',
+                position: 'relative',
+              }}
+            >
+              {/* Ruled lines */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 32px, rgba(70,32,4,0.07) 32px, rgba(70,32,4,0.07) 33px)`,
+                zIndex: 1,
+              }} />
+              {/* Map watermark */}
+              <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+                <img src="/images/profile-background.png" alt="" className="w-full h-full object-cover"
+                  style={{ opacity: 0.08, mixBlendMode: 'multiply' }} />
+              </div>
+              {/* Outer frame */}
+              <div className="absolute inset-0 pointer-events-none" style={{ border: '3px solid rgba(70,36,5,0.55)', zIndex: 6 }} />
+              <div className="absolute pointer-events-none" style={{ inset: '10px', border: '1px solid rgba(70,36,5,0.25)', zIndex: 6 }} />
+              {/* Gentle spine */}
+              <div className="absolute inset-y-0 pointer-events-none" style={{
+                left: '50%', width: '3px', transform: 'translateX(-50%)',
+                background: 'linear-gradient(to right, transparent, rgba(70,36,5,0.18) 50%, transparent)',
+                zIndex: 4,
+              }} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {profile.eraProgress.map((era, i) => {
-              const accent = eraAccents[era.colorTheme] ?? 'text-stone-300'
-              const image = eraImages[era.colorTheme]
-              const percent = era.totalChapters > 0
-                ? Math.round((era.completedChapters / era.totalChapters) * 100)
-                : 0
+              <div className="relative px-14 pt-12" style={{ zIndex: 5 }}>
 
-              return (
-                <motion.div
-                  key={era.eraId}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  onClick={() => navigate(`/eras/${era.eraId}`)}
-                  className="relative overflow-hidden border border-stone-800 hover:border-stone-600 cursor-pointer transition-all duration-500 group h-40"
-                >
-                  {image && (
-                    <>
-                      <img
-                        src={image}
-                        alt={era.eraName}
-                        className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-500"
-                        style={{ objectPosition: '50% 30%' }}
-                      />
-                      <div className="absolute inset-0 bg-linear-to-r from-stone-950/90 to-stone-950/60" />
-                    </>
-                  )}
-
-                  <div className="relative z-10 p-6 h-full flex flex-col justify-between">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className={`text-xs tracking-[0.3em] uppercase mb-2 ${accent}`}>
-                          Era {i + 1}
-                        </p>
-                        <h3 className="text-stone-200 font-bold text-2xl group-hover:text-amber-50 transition-colors">
-                          {era.eraName}
-                        </h3>
-                      </div>
-                      {era.isGrandmasterUnlocked && (
-                        <motion.p
-                          animate={{ opacity: [0.7, 1, 0.7] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="text-yellow-400 text-base"
-                        >
-                          ★ Grandmaster
-                        </motion.p>
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-stone-500 text-sm">
-                          {era.completedChapters}/{era.totalChapters} chapters
-                        </p>
-                        <p className={`text-base font-bold ${accent}`}>{percent}%</p>
-                      </div>
-                      <div className="h-px bg-stone-800 w-full">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${percent}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1.2, delay: i * 0.08 }}
-                          className={`h-px ${accent.replace('text-', 'bg-')}`}
-                        />
-                      </div>
-                    </div>
+                {/* Atlas header */}
+                <div className="text-center mb-16">
+                  <p style={{
+                    fontFamily: 'Cinzel, serif', fontSize: '0.8rem', letterSpacing: '0.55em',
+                    color: 'rgba(30,12,0,0.7)', textTransform: 'uppercase', marginBottom: '0.6rem',
+                  }}>Cartography of Progress · Personal Record</p>
+                  <h2 style={{
+                    fontFamily: 'Cinzel, serif', fontSize: 'clamp(2rem, 3.2vw, 2.8rem)',
+                    fontWeight: 700, color: '#140600', letterSpacing: '0.04em', marginBottom: '0.5rem',
+                  }}>The Eras of History</h2>
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="h-px w-24" style={{ backgroundColor: 'rgba(30,12,0,0.35)' }} />
+                    <span style={{ color: 'rgba(30,12,0,0.45)', fontSize: '1.1rem' }}>✦</span>
+                    <div className="h-px w-24" style={{ backgroundColor: 'rgba(30,12,0,0.35)' }} />
                   </div>
-                </motion.div>
-              )
-            })}
+                  <p style={{
+                    fontFamily: 'EB Garamond, serif', fontSize: '1.2rem',
+                    color: 'rgba(30,12,0,0.65)', fontStyle: 'italic',
+                  }}>Each era a territory — chart your journey through the ages.</p>
+                </div>
+
+                {/* Cards + SVG trail — exact height, no overflow */}
+                <div className="relative mx-auto" style={{ width: `${CONTAINER_W}px`, height: `${CONTAINER_H}px` }}>
+
+                  {/* Winding trail SVG */}
+                  <svg width={CONTAINER_W} height={CONTAINER_H}
+                    viewBox={`0 0 ${CONTAINER_W} ${CONTAINER_H}`}
+                    className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+                    <path d={trailPath} fill="none" stroke="rgba(120,65,8,0.12)" strokeWidth="18" strokeLinecap="round" />
+                    <path d={trailPath} fill="none" stroke="rgba(100,50,5,0.18)" strokeWidth="8" strokeLinecap="round" />
+                    <path d={trailPath} fill="none" stroke="rgba(55,25,3,0.55)"
+                      strokeWidth="2.5" strokeDasharray="14 9" strokeLinecap="round" />
+                    {TRAIL_PTS.map((pt, i) => (
+                      <g key={i}>
+                        <circle cx={pt.x} cy={pt.y} r="20"
+                          fill="rgba(180,130,40,0.1)" stroke="rgba(55,25,3,0.2)" strokeWidth="1" />
+                        <circle cx={pt.x} cy={pt.y} r="5.5" fill="rgba(55,25,3,0.5)" />
+                        <text
+                          x={ZIGZAG[i].side === 'left' ? pt.x - 34 : pt.x + 34}
+                          y={pt.y + 4}
+                          textAnchor={ZIGZAG[i].side === 'left' ? 'end' : 'start'}
+                          fontSize="12" fill="rgba(35,14,2,0.55)"
+                          fontFamily="Cinzel, serif" fontWeight="700">
+                          {romanNumerals[i]}
+                        </text>
+                      </g>
+                    ))}
+                    {/* Compass rose — bottom center of SVG */}
+                    <g transform={`translate(${CONTAINER_W / 2}, ${CONTAINER_H - 35})`} opacity="0.28">
+                      <circle cx="0" cy="0" r="22" fill="none" stroke="rgba(40,18,2,0.9)" strokeWidth="0.9" />
+                      <circle cx="0" cy="0" r="4" fill="rgba(40,18,2,0.6)" />
+                      {[0, 45, 90, 135].map(deg => (
+                        <line key={deg}
+                          x1={Math.cos((deg - 90) * Math.PI / 180) * 6}
+                          y1={Math.sin((deg - 90) * Math.PI / 180) * 6}
+                          x2={Math.cos((deg - 90) * Math.PI / 180) * 22}
+                          y2={Math.sin((deg - 90) * Math.PI / 180) * 22}
+                          stroke="rgba(40,18,2,0.75)" strokeWidth={deg % 90 === 0 ? 1.4 : 0.7} />
+                      ))}
+                      <text x="0" y="-27" textAnchor="middle" fontSize="9"
+                        fill="rgba(40,18,2,0.85)" fontFamily="Cinzel, serif" fontWeight="600">N</text>
+                    </g>
+                  </svg>
+
+                  {/* Era cards */}
+                  {profile.eraProgress.map((era, i) => {
+                    const image = eraImages[era.colorTheme]
+                    const accent = eraAccentColors[era.colorTheme] ?? '#6b3a10'
+                    const accentLight = eraAccentLight[era.colorTheme] ?? '#d4a853'
+                    const description = eraDescriptions[era.colorTheme] ?? ''
+                    const percent = era.totalChapters > 0
+                      ? Math.round((era.completedChapters / era.totalChapters) * 100) : 0
+                    const pos = ZIGZAG[i]
+                    const isHovered = hoveredEra === i
+                    const hoverExtraW = CARD_W_HOVER - CARD_W
+                    const hoverExtraH = CARD_H_HOVER - CARD_H
+                    const hoverLeft = pos.side === 'right' ? pos.left - hoverExtraW : pos.left
+
+                    return (
+                      <motion.div
+                        key={era.eraId}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.13, duration: 0.65 }}
+                        animate={{
+                          width: isHovered ? CARD_W_HOVER : CARD_W,
+                          height: isHovered ? CARD_H_HOVER : CARD_H,
+                          left: isHovered ? hoverLeft : pos.left,
+                          top: isHovered ? pos.top - hoverExtraH / 2 : pos.top,
+                          zIndex: isHovered ? 20 : 2 + i,
+                        }}
+                        // @ts-ignore — transition prop valid on motion.div
+                        transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                        onClick={() => navigate(`/eras/${era.eraId}`)}
+                        onMouseEnter={() => setHoveredEra(i)}
+                        onMouseLeave={() => setHoveredEra(null)}
+                        className="absolute cursor-pointer overflow-hidden"
+                        style={{
+                          borderRadius: '2px',
+                          border: isHovered ? `1px solid ${accentLight}aa` : '1px solid rgba(45,20,3,0.45)',
+                          boxShadow: isHovered
+                            ? `0 24px 70px rgba(0,0,0,0.55), 0 0 0 1px ${accentLight}60, 0 0 50px ${accentLight}18`
+                            : '0 6px 28px rgba(0,0,0,0.32), 0 1px 0 rgba(190,150,50,0.25)',
+                          display: 'flex',
+                        }}
+                      >
+                        {/* Text panel */}
+                        <motion.div
+                          animate={{ width: isHovered ? 290 : 240 }}
+                          transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                          className="flex-shrink-0 flex flex-col justify-between relative overflow-hidden"
+                          style={{
+                            padding: '16px 18px',
+                            background: 'linear-gradient(135deg, #dfc070 0%, #d4b568 100%)',
+                            borderRight: `4px solid ${accent}`,
+                          }}
+                        >
+                          <div className="absolute inset-0" style={{
+                            background: `linear-gradient(135deg, ${accent}20 0%, transparent 65%)`,
+                          }} />
+                          <div className="relative">
+                            <div className="flex items-center justify-between mb-1">
+                              <span style={{
+                                fontFamily: 'Cinzel, serif', fontSize: '0.62rem',
+                                letterSpacing: '0.3em', color: `${accent}dd`, textTransform: 'uppercase',
+                              }}>Era {romanNumerals[i]}</span>
+                              {era.isGrandmasterUnlocked && (
+                                <motion.span animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity }}
+                                  style={{ fontFamily: 'Cinzel, serif', fontSize: '0.57rem', color: '#6a4e00', letterSpacing: '0.06em' }}>
+                                  ★ Grandmaster
+                                </motion.span>
+                              )}
+                            </div>
+                            <h3 style={{
+                              fontFamily: 'Cinzel, serif', fontSize: isHovered ? '1.4rem' : '1.15rem',
+                              fontWeight: 700, color: '#120600', lineHeight: 1.2, marginBottom: '0.4rem',
+                            }}>{era.eraName}</h3>
+                            <p style={{
+                              fontFamily: 'EB Garamond, serif', fontSize: isHovered ? '0.95rem' : '0.82rem',
+                              color: 'rgba(18,6,0,0.68)', fontStyle: 'italic', lineHeight: 1.45,
+                            }}>{description}</p>
+                          </div>
+                          <div className="relative">
+                            <div className="flex justify-between mb-1">
+                              <span style={{ fontFamily: 'EB Garamond, serif', fontSize: '0.75rem', color: 'rgba(18,6,0,0.55)', fontStyle: 'italic' }}>
+                                {era.completedChapters}/{era.totalChapters} explored
+                              </span>
+                              <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.72rem', fontWeight: 700, color: accent }}>
+                                {percent}%
+                              </span>
+                            </div>
+                            <div style={{ height: '2px', backgroundColor: 'rgba(18,6,0,0.14)', borderRadius: '1px' }}>
+                              <motion.div initial={{ width: 0 }} whileInView={{ width: `${percent}%` }}
+                                viewport={{ once: true }} transition={{ duration: 1.2, delay: i * 0.13 }}
+                                style={{ height: '2px', backgroundColor: accent, borderRadius: '1px' }} />
+                            </div>
+                          </div>
+                        </motion.div>
+
+                        {/* Image panel */}
+                        <div className="flex-1 relative overflow-hidden">
+                          <motion.img src={image} alt={era.eraName}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            style={{ objectPosition: '50% 30%' }}
+                            animate={{
+                              scale: isHovered ? 1.08 : 1,
+                              filter: isHovered ? 'brightness(1.35) contrast(1.05)' : 'brightness(0.85)',
+                            }}
+                            transition={{ duration: 0.5, ease: 'easeOut' }} />
+                          <div className="absolute inset-0" style={{
+                            background: 'linear-gradient(to right, rgba(200,168,80,0.3) 0%, transparent 30%)',
+                          }} />
+                          <motion.div animate={{ opacity: isHovered ? 1 : 0 }} transition={{ duration: 0.25 }}
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: 'rgba(0,0,0,0.15)' }}>
+                            <span style={{
+                              fontFamily: 'Cinzel, serif', fontSize: '1rem', color: '#f5e8c8',
+                              letterSpacing: '0.35em', textTransform: 'uppercase',
+                              textShadow: '0 1px 10px rgba(0,0,0,0.9)',
+                            }}>Explore →</span>
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </div>
+
+                {/* Closing padding — just enough so the atlas ends cleanly after last card */}
+                <div style={{ height: '48px' }} />
+              </div>
+            </motion.div>
+
+            {/* ── FOOTER — separate dark panel below atlas ── */}
+            <div style={{
+              background: 'linear-gradient(to bottom, #1a0d04, #120800)',
+              border: '1px solid rgba(120,70,15,0.35)',
+              borderTop: '3px solid rgba(120,70,15,0.5)',
+              padding: '28px 48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+            }}>
+              {/* Left: brand line */}
+              <div>
+                <p style={{
+                  fontFamily: 'Cinzel, serif', fontSize: '0.72rem',
+                  letterSpacing: '0.45em', color: 'rgba(212,168,83,0.5)',
+                  textTransform: 'uppercase', marginBottom: '0.35rem',
+                }}>The Trail</p>
+                <p style={{
+                  fontFamily: 'EB Garamond, serif', fontSize: '1.05rem',
+                  color: 'rgba(212,168,83,0.75)', fontStyle: 'italic',
+                }}>A Chronicle of Human History</p>
+              </div>
+
+              {/* Center: decorative rule */}
+              <div className="flex items-center gap-3 flex-1 mx-12">
+                <div className="h-px flex-1" style={{ backgroundColor: 'rgba(212,168,83,0.18)' }} />
+                <span style={{ color: 'rgba(212,168,83,0.3)', fontSize: '0.9rem' }}>✦</span>
+                <div className="h-px flex-1" style={{ backgroundColor: 'rgba(212,168,83,0.18)' }} />
+              </div>
+
+              {/* Right: mastery count */}
+              <div className="text-right">
+                <p style={{
+                  fontFamily: 'Cinzel, serif', fontSize: '0.68rem',
+                  letterSpacing: '0.4em', color: 'rgba(212,168,83,0.45)',
+                  textTransform: 'uppercase', marginBottom: '0.35rem',
+                }}>Progress</p>
+                <p style={{
+                  fontFamily: 'Cinzel, serif', fontSize: '1.3rem',
+                  fontWeight: 700, color: '#d4a853',
+                  textShadow: '0 0 20px rgba(212,168,83,0.3)',
+                }}>
+                  {profile.eraProgress.filter(e => e.isGrandmasterUnlocked).length}
+                  <span style={{ color: 'rgba(212,168,83,0.35)', fontSize: '1rem' }}>
+                    {' '}/ {profile.eraProgress.length}
+                  </span>
+                  <span style={{
+                    fontFamily: 'Cinzel, serif', fontSize: '0.7rem',
+                    letterSpacing: '0.25em', color: 'rgba(212,168,83,0.55)',
+                    display: 'block', fontWeight: 400, marginTop: '2px',
+                  }}>ERAS MASTERED</span>
+                </p>
+              </div>
+            </div>
+
           </div>
-        </section>
+        </div>
 
       </div>
 
-      {/* ── Collectible Fullscreen Inspect Modal ── */}
+      {/* ══ Inspect Modal ══ */}
       <AnimatePresence>
         {selectedCollectible && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setSelectedCollectible(null)}
             className="fixed inset-0 z-50 flex items-center justify-center px-4 backdrop-blur-xl cursor-pointer"
-            style={{
-              background: 'radial-gradient(ellipse at center, rgba(180,120,30,0.1) 0%, rgba(0,0,0,0.97) 70%)'
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: 40 }}
-              transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+            style={{ background: 'radial-gradient(ellipse at center, rgba(180,120,30,0.1) 0%, rgba(0,0,0,0.97) 70%)' }}>
+            <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
               onClick={e => e.stopPropagation()}
-              className="flex flex-col items-center text-center max-w-md cursor-default"
-            >
-              {/* Glow */}
-              <motion.div
-                animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.1, 1] }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="absolute w-80 h-80 rounded-full blur-3xl"
-                style={{
-                  background: rarityGlowColor[selectedCollectible.rarity as keyof typeof rarityGlowColor]
-                    ?? 'rgba(120,110,90,0.3)'
-                }}
-              />
-
-              {/* Full image */}
-              <motion.div
-                initial={{ y: 20 }}
-                animate={{ y: [0, -8, 0] }}
+              className="flex flex-col items-center text-center max-w-md cursor-default">
+              <motion.div animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.1, 1] }}
+                transition={{ duration: 3, repeat: Infinity }} className="absolute w-80 h-80 rounded-full blur-3xl"
+                style={{ background: rarityGlowColor[selectedCollectible.rarity] ?? 'rgba(120,110,90,0.3)' }} />
+              <motion.div initial={{ y: 20 }} animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className={`relative w-64 h-64 rounded-full border-2 overflow-hidden mb-6 ${
-                  rarityBorder[selectedCollectible.rarity as keyof typeof rarityBorder] ?? 'border-stone-500'
-                }`}
+                className="relative w-64 h-64 rounded-full border-2 overflow-hidden mb-6"
                 style={{
-                  boxShadow: `0 0 60px ${rarityGlowColor[selectedCollectible.rarity as keyof typeof rarityGlowColor] ?? 'rgba(120,110,90,0.3)'}`
-                }}
-              >
-                <img
-                  src={selectedCollectible.imageUrl}
-                  alt={selectedCollectible.name}
-                  className="w-full h-full object-cover"
-                />
+                  borderColor: rarityBorderColor[selectedCollectible.rarity] ?? '#a08060',
+                  boxShadow: `0 0 60px ${rarityGlowColor[selectedCollectible.rarity] ?? 'rgba(120,110,90,0.3)'}`,
+                }}>
+                <img src={selectedCollectible.imageUrl} alt={selectedCollectible.name} className="w-full h-full object-cover" />
               </motion.div>
-
-              {/* Pedestal */}
-              <div className="w-px h-10 bg-linear-to-b from-stone-500 to-transparent" />
-              <div className="w-48 h-px bg-stone-500" />
-              <div className="w-32 h-px mt-0.5 bg-stone-600" />
-
-              {/* Info */}
+              <div className="w-px h-10" style={{ background: 'linear-gradient(to bottom, rgba(196,164,122,0.6), transparent)' }} />
+              <div className="w-48 h-px" style={{ backgroundColor: 'rgba(196,164,122,0.4)' }} />
+              <div className="w-32 h-px mt-0.5" style={{ backgroundColor: 'rgba(196,164,122,0.25)' }} />
               <div className="mt-8 bg-black/50 backdrop-blur-sm px-10 py-8 border border-stone-800">
-                <p className="text-amber-50 text-3xl font-bold mb-2">
-                  {selectedCollectible.name}
-                </p>
-                <p className={`text-sm tracking-[0.3em] uppercase mb-6 ${
-                  rarityText[selectedCollectible.rarity as keyof typeof rarityText] ?? 'text-stone-400'
-                }`}>
-                  {selectedCollectible.rarity} Collectible
-                </p>
-                <p className="text-stone-300 text-base leading-relaxed mb-8">
-                  {selectedCollectible.description}
-                </p>
-                <button
-                  onClick={() => setSelectedCollectible(null)}
+                <p className="text-amber-50 text-3xl font-bold mb-2" style={{ fontFamily: 'Cinzel, serif' }}>
+                  {selectedCollectible.name}</p>
+                <p className={`text-sm tracking-[0.3em] uppercase mb-6 ${rarityTextModal[selectedCollectible.rarity] ?? 'text-stone-400'}`}
+                  style={{ fontFamily: 'Cinzel, serif' }}>
+                  {selectedCollectible.rarity} Collectible</p>
+                <p className="text-stone-300 text-base leading-relaxed mb-8"
+                  style={{ fontFamily: 'EB Garamond, serif', fontSize: '1.1rem' }}>
+                  {selectedCollectible.description}</p>
+                <button onClick={() => setSelectedCollectible(null)}
                   className="text-stone-500 text-sm tracking-widest uppercase hover:text-amber-200 transition-colors cursor-pointer"
-                >
-                  ✕ Close
-                </button>
+                  style={{ fontFamily: 'Cinzel, serif' }}>✕ Close</button>
               </div>
             </motion.div>
           </motion.div>
