@@ -95,6 +95,7 @@ const rarityTextModal: Record<string, string> = {
 }
 
 const romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+const ERA_ORDER = ['prehistoric', 'ancient', 'medieval', 'renaissance', 'exploration', 'modern', 'digital']
 
 const CARD_W = 580
 const CARD_H = 170
@@ -138,6 +139,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [selectedCollectible, setSelectedCollectible] = useState<CollectibleDto | null>(null)
   const [hoveredEra, setHoveredEra] = useState<number | null>(null)
+  const [expandedEra, setExpandedEra] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return }
@@ -165,6 +167,181 @@ export default function ProfilePage() {
     { value: profile.earnedCollectibles.length, label: 'Collectibles' },
     { value: profile.eraProgress.filter(e => e.isGrandmasterUnlocked).length, label: 'Eras Mastered' },
   ]
+
+  // ── Build era groups ──────────────────────────────────────────────
+  const chapterCollectibles = profile.allCollectibles.filter(c => c.rarity !== 'Legendary')
+  const legendaryCollectibles = profile.allCollectibles.filter(c => c.rarity === 'Legendary')
+
+  const eraGroups = profile.eraProgress.map((era, eraIndex) => {
+    const eraThemeIndex = ERA_ORDER.indexOf(era.colorTheme)
+    const startIndex = (eraThemeIndex >= 0 ? eraThemeIndex : eraIndex) * 10
+    const eraChapterCollectibles = chapterCollectibles.slice(startIndex, startIndex + 10)
+    const eraLegendary = legendaryCollectibles[eraIndex] ?? null
+    const allInEra = [...eraChapterCollectibles, ...(eraLegendary ? [eraLegendary] : [])]
+
+    return {
+      era,
+      chapterCollectibles: eraChapterCollectibles,
+      legendary: eraLegendary,
+      allCollectibles: allInEra,
+      earnedCount: allInEra.filter(c => c.isEarned).length,
+      totalCount: allInEra.length,
+    }
+  })
+
+  const renderCollectible = (collectible: CollectibleDto, i: number) => {
+    const rarity = collectible.rarity
+    const glowColor = rarityGlowColor[rarity] ?? 'rgba(180,150,90,0.5)'
+    const borderColor = rarityBorderColor[rarity] ?? '#a08060'
+    const labelColor = rarityLabel[rarity] ?? '#c4a47a'
+    const isLegendary = rarity === 'Legendary'
+
+    return (
+      <motion.div
+        key={collectible.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: i * 0.04, duration: 0.4 }}
+        className="flex flex-col items-center"
+        style={{ opacity: collectible.isEarned ? 1 : 0.28 }}
+      >
+        {/* Orb area */}
+        <div
+          className="w-full flex flex-col items-center pt-6 pb-2 px-1 relative"
+          style={{ minHeight: isLegendary ? '175px' : '155px' }}
+        >
+          {collectible.isEarned && (
+            <>
+              <motion.div
+                animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.05, 0.9] }}
+                transition={{ duration: 3 + i * 0.3, repeat: Infinity }}
+                className="absolute bottom-3 rounded-full blur-2xl"
+                style={{
+                  width: isLegendary ? '120px' : '80px',
+                  height: isLegendary ? '28px' : '20px',
+                  background: glowColor,
+                }}
+              />
+              {isLegendary && (
+                <motion.div
+                  animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.08, 1] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute rounded-full blur-3xl"
+                  style={{ width: '140px', height: '140px', top: '6px', background: 'rgba(250,204,21,0.15)' }}
+                />
+              )}
+            </>
+          )}
+
+          {isLegendary && collectible.isEarned && (
+            <motion.div
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute top-1"
+            >
+              <span style={{ color: '#facc15', fontSize: '0.8rem' }}>★</span>
+            </motion.div>
+          )}
+
+          <motion.div
+            whileHover={collectible.isEarned ? { y: -7, scale: 1.06 } : {}}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            onClick={() => collectible.isEarned && setSelectedCollectible(collectible)}
+            className="relative rounded-full overflow-hidden"
+            style={{
+              cursor: collectible.isEarned ? 'pointer' : 'default',
+              width: isLegendary ? '100px' : '86px',
+              height: isLegendary ? '100px' : '86px',
+              borderStyle: 'solid',
+              borderWidth: isLegendary ? '3px' : '2px',
+              borderColor: collectible.isEarned ? borderColor : 'rgba(100,80,50,0.2)',
+              boxShadow: collectible.isEarned
+                ? isLegendary
+                  ? `0 0 28px ${glowColor}, 0 0 56px ${glowColor.replace('0.9', '0.3')}, 0 0 80px ${glowColor.replace('0.9', '0.1')}, inset 0 0 12px rgba(0,0,0,0.4)`
+                  : `0 0 16px ${glowColor}, 0 0 36px ${glowColor.replace('0.6', '0.15')}, inset 0 0 12px rgba(0,0,0,0.4)`
+                : 'none',
+            }}
+          >
+            {collectible.isEarned ? (
+              <img src={collectible.imageUrl} alt={collectible.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center" style={{ background: '#1a1208' }}>
+                <span style={{
+                  color: 'rgba(100,80,50,0.3)',
+                  fontFamily: 'Cinzel, serif',
+                  fontSize: isLegendary ? '1.2rem' : '1rem',
+                  fontWeight: 700,
+                }}>?</span>
+              </div>
+            )}
+          </motion.div>
+
+          <div className="w-px flex-1 mt-2" style={{
+            background: `linear-gradient(to bottom, ${collectible.isEarned ? borderColor : 'rgba(196,164,122,0.2)'}, transparent)`,
+            minHeight: '12px',
+          }} />
+        </div>
+
+        {/* Shelf */}
+        <div className="w-full relative" style={{ height: '9px' }}>
+          <div className="absolute inset-0" style={{
+            background: isLegendary ? 'linear-gradient(to bottom, #6b4a18, #3d2208)' : 'linear-gradient(to bottom, #5a3818, #2d1a08)',
+            borderTop: `1px solid ${isLegendary ? '#9a6a28' : '#7a4f20'}`,
+            boxShadow: isLegendary
+              ? '0 3px 14px rgba(250,204,21,0.12), 0 3px 10px rgba(0,0,0,0.7)'
+              : '0 3px 10px rgba(0,0,0,0.7)',
+          }} />
+          <div className="absolute left-0 right-0 top-full h-5"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.45), transparent)' }} />
+        </div>
+
+        {/* Label — Fix 1: bumped font sizes */}
+        <div className="pt-3 pb-5 text-center px-1">
+          {collectible.isEarned ? (
+            <>
+              {isLegendary && (
+                <p style={{
+                  color: 'rgba(250,204,21,0.5)', fontFamily: 'Cinzel, serif',
+                  fontSize: '0.65rem', letterSpacing: '0.25em',
+                  textTransform: 'uppercase', marginBottom: '2px',
+                }}>★ Grandmaster</p>
+              )}
+              <p style={{
+                color: isLegendary ? '#fde68a' : '#e8d5a8',
+                fontFamily: 'Cinzel, serif',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                lineHeight: 1.3,
+                marginBottom: '2px',
+              }}>{collectible.name}</p>
+              <p style={{
+                color: labelColor, fontFamily: 'Cinzel, serif',
+                fontSize: '0.65rem', letterSpacing: '0.22em', textTransform: 'uppercase',
+              }}>{collectible.rarity}</p>
+            </>
+          ) : (
+            <>
+              {isLegendary && (
+                <p style={{
+                  color: 'rgba(250,204,21,0.5)', fontFamily: 'Cinzel, serif',
+                  fontSize: '0.65rem', letterSpacing: '0.22em',
+                  textTransform: 'uppercase', marginBottom: '2px',
+                }}>★ Era Mastery</p>
+              )}
+              <p style={{
+                color: 'rgba(196,164,122,0.55)', fontFamily: 'Cinzel, serif',
+                fontSize: '0.72rem', fontWeight: 700,
+              }}>???</p>
+              <p style={{
+                color: 'rgba(196,164,122,0.4)', fontFamily: 'Cinzel, serif',
+                fontSize: '0.65rem', letterSpacing: '0.22em', textTransform: 'uppercase',
+              }}>{isLegendary ? 'Master Era' : 'Locked'}</p>
+            </>
+          )}
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#1e1105' }}>
@@ -226,8 +403,8 @@ export default function ProfilePage() {
           </motion.div>
         </div>
 
-        {/* ══ TROPHY CABINET ══ */}
-        <div className="max-w-6xl mx-auto px-8 pb-32">
+        {/* ══ TROPHY CABINET — Accordion ══ */}
+        <div className="max-w-6xl mx-auto px-8 pb-20">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
             className="flex items-center gap-4 mb-3">
             <div className="h-px flex-1" style={{ backgroundColor: 'rgba(196,164,122,0.18)' }} />
@@ -238,186 +415,154 @@ export default function ProfilePage() {
             </p>
           </motion.div>
           <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-10"
             style={{ color: 'rgba(196,164,122,0.45)', fontFamily: 'EB Garamond, serif', fontSize: '1.1rem', fontStyle: 'italic' }}>
             Complete chapters and pass quizzes to expand your collection.
           </motion.p>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-0">
-            {profile.allCollectibles.map((collectible, i) => {
-              const rarity = collectible.rarity
-              const glowColor = rarityGlowColor[rarity] ?? 'rgba(180,150,90,0.5)'
-              const borderColor = rarityBorderColor[rarity] ?? '#a08060'
-              const labelColor = rarityLabel[rarity] ?? '#c4a47a'
-              const isLegendary = rarity === 'Legendary'
+          {/* Era accordion rows */}
+          <div className="flex flex-col gap-2">
+            {eraGroups.map((group, groupIndex) => {
+              const accentLight = eraAccentLight[group.era.colorTheme] ?? '#d4a853'
+              const accentDark = eraAccentColors[group.era.colorTheme] ?? '#6b3a10'
+              const isExpanded = expandedEra === group.era.colorTheme
 
               return (
                 <motion.div
-                  key={collectible.id}
-                  initial={{ opacity: 0, y: 30 }}
+                  key={group.era.eraId}
+                  initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.6 }}
-                  className="flex flex-col items-center"
-                  style={{ opacity: collectible.isEarned ? 1 : 0.28 }}
+                  transition={{ delay: groupIndex * 0.07, duration: 0.5 }}
                 >
-                  <div
-                    className="w-full flex flex-col items-center pt-10 pb-4 px-4 relative"
-                    style={{ minHeight: isLegendary ? '260px' : '220px' }}
+                  {/* Row header */}
+                  <motion.div
+                    onClick={() => setExpandedEra(isExpanded ? null : group.era.colorTheme)}
+                    className="flex items-center justify-between px-6 py-4 cursor-pointer transition-all duration-300"
+                    style={{
+                      background: isExpanded ? 'rgba(30,15,4,0.97)' : 'rgba(20,10,2,0.8)',
+                      border: `1px solid ${isExpanded ? accentLight + '55' : 'rgba(100,65,20,0.3)'}`,
+                      borderLeft: `3px solid ${accentLight}`,
+                      borderBottom: isExpanded ? 'none' : `1px solid ${isExpanded ? accentLight + '55' : 'rgba(100,65,20,0.3)'}`,
+                    }}
+                    whileHover={{ backgroundColor: 'rgba(28,13,3,0.97)' }}
                   >
-                    {collectible.isEarned && (
-                      <>
-                        <motion.div
-                          animate={{ opacity: [0.5, 1, 0.5], scale: [0.9, 1.05, 0.9] }}
-                          transition={{ duration: 3 + i * 0.3, repeat: Infinity }}
-                          className="absolute bottom-6 rounded-full blur-2xl"
-                          style={{
-                            width: isLegendary ? '180px' : '120px',
-                            height: isLegendary ? '40px' : '30px',
-                            background: glowColor,
-                          }}
-                        />
-                        {isLegendary && (
-                          <motion.div
-                            animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.08, 1] }}
-                            transition={{ duration: 4, repeat: Infinity }}
-                            className="absolute rounded-full blur-3xl"
-                            style={{
-                              width: '200px',
-                              height: '200px',
-                              top: '10px',
-                              background: 'rgba(250,204,21,0.15)',
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
+                    <div className="flex items-center gap-4">
+                      <span style={{
+                        fontFamily: 'Cinzel, serif', fontSize: '0.62rem',
+                        letterSpacing: '0.3em', color: accentLight, opacity: 0.65,
+                        textTransform: 'uppercase', minWidth: '38px',
+                      }}>
+                        Era {romanNumerals[groupIndex]}
+                      </span>
+                      <span style={{
+                        fontFamily: 'Cinzel, serif', fontSize: '1.05rem',
+                        fontWeight: 700, color: '#f5e8c8',
+                      }}>
+                        {group.era.eraName}
+                      </span>
+                      {group.era.isGrandmasterUnlocked && (
+                        <motion.span
+                          animate={{ opacity: [0.6, 1, 0.6] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          style={{ fontFamily: 'Cinzel, serif', fontSize: '0.62rem', color: '#facc15', letterSpacing: '0.08em' }}
+                        >
+                          ★ Grandmaster
+                        </motion.span>
+                      )}
+                    </div>
 
-                    {isLegendary && collectible.isEarned && (
-                      <motion.div
-                        animate={{ opacity: [0.7, 1, 0.7] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="absolute top-4"
+                    <div className="flex items-center gap-5">
+                      <div className="hidden md:flex items-center gap-3">
+                        <div style={{ width: '110px', height: '2px', background: 'rgba(196,164,122,0.12)', borderRadius: '1px' }}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${group.totalCount > 0 ? (group.earnedCount / group.totalCount) * 100 : 0}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1, delay: groupIndex * 0.07 }}
+                            style={{ height: '2px', background: accentLight, borderRadius: '1px' }}
+                          />
+                        </div>
+                        <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.68rem', color: accentLight, minWidth: '36px' }}>
+                          {group.earnedCount}/{group.totalCount}
+                        </span>
+                      </div>
+
+                      <motion.span
+                        animate={{ rotate: isExpanded ? -90 : 90 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        style={{ color: accentLight, fontSize: '1rem', display: 'block', lineHeight: 1, opacity: 0.8 }}
                       >
-                        <span style={{ color: '#facc15', fontSize: '1.1rem' }}>★</span>
+                        ›
+                      </motion.span>
+                    </div>
+                  </motion.div>
+
+                  {/* Expanded shelf */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div style={{
+                          background: 'rgba(11,6,1,0.98)',
+                          border: `1px solid ${accentLight}40`,
+                          borderLeft: `3px solid ${accentLight}`,
+                          borderTop: `1px solid ${accentDark}60`,
+                          padding: '20px 20px 4px',
+                        }}>
+                          <div style={{
+                            height: '1px',
+                            background: `linear-gradient(to right, ${accentLight}50, transparent)`,
+                            marginBottom: '12px',
+                          }} />
+
+                          {/* 10 chapter collectibles in a row */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '4px' }}>
+                            {group.chapterCollectibles.map((c, i) => renderCollectible(c, i))}
+                          </div>
+
+                          {/* Fix 2: Legendary centered below */}
+                          {group.legendary && (
+                            <div style={{
+                              marginTop: '8px',
+                              paddingTop: '16px',
+                              borderTop: `1px solid rgba(250,204,21,0.12)`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              textAlign: 'center',
+                            }}>
+                              <p style={{
+                                fontFamily: 'Cinzel, serif', fontSize: '0.72rem',
+                                letterSpacing: '0.4em', color: 'rgba(250,204,21,0.7)',
+                                textTransform: 'uppercase', marginBottom: '12px',
+                              }}>★ Era Grandmaster Reward</p>
+                              <div style={{ width: '140px' }}>
+                                {renderCollectible(group.legendary, 10)}
+                              </div>
+                              <p style={{
+                                fontFamily: 'EB Garamond, serif', fontSize: '1rem',
+                                color: group.legendary.isEarned ? 'rgba(196,164,122,0.55)' : 'rgba(196,164,122,0.8)',
+                                fontStyle: 'italic', lineHeight: 1.5, maxWidth: '520px',
+                                marginTop: '4px',
+                              }}>
+                                {group.legendary.isEarned
+                                  ? group.legendary.description
+                                  : `Complete all chapters and quizzes in ${group.era.eraName} to unlock this legendary reward.`}
+                              </p>
+                            </div>
+                          )}
+
+                          <div style={{ height: '12px' }} />
+                        </div>
                       </motion.div>
                     )}
-
-                    <motion.div
-                      whileHover={collectible.isEarned ? { y: -12, scale: 1.06 } : {}}
-                      transition={{ duration: 0.35, ease: 'easeOut' }}
-                      onClick={() => collectible.isEarned && setSelectedCollectible(collectible)}
-                      className="relative rounded-full overflow-hidden"
-                      style={{
-                        cursor: collectible.isEarned ? 'pointer' : 'default',
-                        width: isLegendary ? '160px' : '144px',
-                        height: isLegendary ? '160px' : '144px',
-                        borderStyle: 'solid',
-                        borderWidth: isLegendary ? '3px' : '2px',
-                        borderColor: collectible.isEarned ? borderColor : 'rgba(100,80,50,0.2)',
-                        boxShadow: collectible.isEarned
-                          ? isLegendary
-                            ? `0 0 40px ${glowColor}, 0 0 80px ${glowColor.replace('0.9', '0.3')}, 0 0 120px ${glowColor.replace('0.9', '0.15')}, inset 0 0 20px rgba(0,0,0,0.4)`
-                            : `0 0 25px ${glowColor}, 0 0 60px ${glowColor.replace('0.6', '0.2')}, inset 0 0 20px rgba(0,0,0,0.4)`
-                          : 'none',
-                      }}
-                    >
-                      {collectible.isEarned ? (
-                        <img src={collectible.imageUrl} alt={collectible.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center" style={{ background: '#1a1208' }}>
-                          <span style={{
-                            color: 'rgba(100,80,50,0.3)',
-                            fontFamily: 'Cinzel, serif',
-                            fontSize: isLegendary ? '2rem' : '1.5rem',
-                            fontWeight: 700,
-                          }}>?</span>
-                        </div>
-                      )}
-                    </motion.div>
-
-                    <div className="w-px flex-1 mt-3" style={{
-                      background: `linear-gradient(to bottom, ${collectible.isEarned ? borderColor : 'rgba(196,164,122,0.2)'}, transparent)`,
-                      minHeight: '24px',
-                    }} />
-                  </div>
-
-                  {/* Shelf */}
-                  <div className="w-full relative" style={{ height: '14px' }}>
-                    <div className="absolute inset-0" style={{
-                      background: isLegendary
-                        ? 'linear-gradient(to bottom, #6b4a18, #3d2208)'
-                        : 'linear-gradient(to bottom, #5a3818, #2d1a08)',
-                      borderTop: `1px solid ${isLegendary ? '#9a6a28' : '#7a4f20'}`,
-                      boxShadow: isLegendary
-                        ? '0 4px 20px rgba(250,204,21,0.15), 0 4px 16px rgba(0,0,0,0.7)'
-                        : '0 4px 16px rgba(0,0,0,0.7)',
-                    }} />
-                    {[18, 42, 68, 85].map(pct => (
-                      <div key={pct} className="absolute top-0 bottom-0 w-px opacity-20"
-                        style={{ left: `${pct}%`, background: 'rgba(0,0,0,0.5)' }} />
-                    ))}
-                    <div className="absolute left-0 right-0 top-full h-8"
-                      style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.5), transparent)' }} />
-                  </div>
-
-                  {/* Label */}
-                  <div className="pt-5 pb-10 text-center">
-                    {collectible.isEarned ? (
-                      <>
-                        {isLegendary && (
-                          <p className="text-xs tracking-[0.4em] uppercase mb-1"
-                            style={{ color: 'rgba(250,204,21,0.5)', fontFamily: 'Cinzel, serif' }}>
-                            ★ Grandmaster
-                          </p>
-                        )}
-                        <p className="font-bold mb-1" style={{
-                          color: isLegendary ? '#fde68a' : '#e8d5a8',
-                          fontFamily: 'Cinzel, serif',
-                          fontSize: isLegendary ? '1.05rem' : '1rem',
-                        }}>
-                          {collectible.name}
-                        </p>
-                        <p className="uppercase" style={{
-                          color: labelColor,
-                          fontFamily: 'Cinzel, serif',
-                          fontSize: '0.7rem',
-                          letterSpacing: '0.3em',
-                        }}>
-                          {collectible.rarity}
-                        </p>
-                        <p className="mt-1" style={{
-                          color: 'rgba(196,164,122,0.28)',
-                          fontFamily: 'EB Garamond, serif',
-                          fontSize: '0.85rem',
-                        }}>
-                          Click to inspect
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        {isLegendary && (
-                          <p className="text-xs tracking-[0.3em] uppercase mb-1"
-                            style={{ color: 'rgba(250,204,21,0.2)', fontFamily: 'Cinzel, serif' }}>
-                            ★ Era Mastery
-                          </p>
-                        )}
-                        <p className="font-bold mb-1" style={{
-                          color: 'rgba(100,80,50,0.3)',
-                          fontFamily: 'Cinzel, serif',
-                          fontSize: '1rem',
-                        }}>???</p>
-                        <p className="uppercase" style={{
-                          color: 'rgba(100,80,50,0.22)',
-                          fontFamily: 'Cinzel, serif',
-                          fontSize: '0.7rem',
-                          letterSpacing: '0.3em',
-                        }}>
-                          {isLegendary ? 'Master the Era' : 'Locked'}
-                        </p>
-                      </>
-                    )}
-                  </div>
+                  </AnimatePresence>
                 </motion.div>
               )
             })}
@@ -724,7 +869,6 @@ export default function ProfilePage() {
                   background: rarityGlowColor[selectedCollectible.rarity] ?? 'rgba(120,110,90,0.3)',
                 }}
               />
-
               {selectedCollectible.rarity === 'Legendary' && (
                 <motion.div
                   animate={{ opacity: [0.1, 0.3, 0.1], scale: [0.9, 1.2, 0.9] }}
@@ -733,7 +877,6 @@ export default function ProfilePage() {
                   style={{ width: '600px', height: '600px', background: 'rgba(250,204,21,0.08)' }}
                 />
               )}
-
               <motion.div
                 initial={{ y: 20 }}
                 animate={{ y: [0, -8, 0] }}
@@ -752,17 +895,13 @@ export default function ProfilePage() {
               >
                 <img src={selectedCollectible.imageUrl} alt={selectedCollectible.name} className="w-full h-full object-cover" />
               </motion.div>
-
               <div className="w-px h-10" style={{
                 background: `linear-gradient(to bottom, ${rarityBorderColor[selectedCollectible.rarity] ?? 'rgba(196,164,122,0.6)'}, transparent)`
               }} />
               <div className="w-48 h-px" style={{ backgroundColor: selectedCollectible.rarity === 'Legendary' ? 'rgba(250,204,21,0.4)' : 'rgba(196,164,122,0.4)' }} />
               <div className="w-32 h-px mt-0.5" style={{ backgroundColor: selectedCollectible.rarity === 'Legendary' ? 'rgba(250,204,21,0.2)' : 'rgba(196,164,122,0.25)' }} />
-
               <div className="mt-8 bg-black/50 backdrop-blur-sm px-10 py-8"
-                style={{
-                  border: `1px solid ${selectedCollectible.rarity === 'Legendary' ? 'rgba(250,204,21,0.3)' : 'rgba(55,45,35,1)'}`,
-                }}>
+                style={{ border: `1px solid ${selectedCollectible.rarity === 'Legendary' ? 'rgba(250,204,21,0.3)' : 'rgba(55,45,35,1)'}` }}>
                 {selectedCollectible.rarity === 'Legendary' && (
                   <motion.p
                     animate={{ opacity: [0.6, 1, 0.6] }}
@@ -774,10 +913,7 @@ export default function ProfilePage() {
                   </motion.p>
                 )}
                 <p className="text-amber-50 font-bold mb-2"
-                  style={{
-                    fontFamily: 'Cinzel, serif',
-                    fontSize: selectedCollectible.rarity === 'Legendary' ? '2rem' : '1.875rem',
-                  }}>
+                  style={{ fontFamily: 'Cinzel, serif', fontSize: selectedCollectible.rarity === 'Legendary' ? '2rem' : '1.875rem' }}>
                   {selectedCollectible.name}
                 </p>
                 <p className={`text-sm tracking-[0.3em] uppercase mb-6 ${rarityTextModal[selectedCollectible.rarity] ?? 'text-stone-400'}`}
