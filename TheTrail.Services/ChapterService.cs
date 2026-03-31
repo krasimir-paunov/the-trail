@@ -304,21 +304,24 @@ namespace TheTrail.Services
 
         public async Task<bool> CheckEraGrandmasterAsync(int eraId, string userId)
         {
-            List<int> chapterIds = await _chapterRepository
+            List<int> rareCollectibleIds = await _collectibleRepository
                 .AllAsNoTracking()
-                .Where(c => c.EraId == eraId && c.IsPublished)
+                .Where(c => c.EraId == null
+                         && c.Rarity == Domain.Enums.Rarity.Rare
+                         && c.Chapter != null
+                         && c.Chapter.EraId == eraId
+                         && c.Chapter.IsPublished)
                 .Select(c => c.Id)
                 .ToListAsync();
 
-            if (chapterIds.Count == 0) return false;
+            if (rareCollectibleIds.Count == 0) return false;
 
-            int completedCount = await _progressRepository
+            int earnedCount = await _userCollectibleRepository
                 .AllAsNoTracking()
-                .CountAsync(p => p.UserId == userId
-                              && chapterIds.Contains(p.ChapterId)
-                              && p.QuizPassed);
+                .CountAsync(uc => uc.UserId == userId
+                               && rareCollectibleIds.Contains(uc.CollectibleId));
 
-            return completedCount >= chapterIds.Count;
+            return earnedCount >= rareCollectibleIds.Count;
         }
 
         public async Task AwardLegendaryIfEarnedAsync(int eraId, string userId)

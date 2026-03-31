@@ -695,48 +695,36 @@ export default function ChapterPage() {
                   : 'The trail is long. Study and try again.'}
               </p>
 
+              {/* Buttons — only shown on failure */}
               <div className="flex gap-4 justify-center">
                 {!passed && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => { resetQuiz(); setShowQuiz(true) }}
-                    className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
-                    style={{
-                      border: '1px solid var(--parchment-border)',
-                      color: 'var(--ink-muted)',
-                      background: 'transparent'
-                    }}
-                  >
-                    Try Again
-                  </motion.button>
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      onClick={() => { resetQuiz(); setShowQuiz(true) }}
+                      className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                      style={{
+                        border: '1px solid var(--parchment-border)',
+                        color: 'var(--ink-muted)',
+                        background: 'transparent'
+                      }}
+                    >
+                      Try Again
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      onClick={() => navigate(-1)}
+                      className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
+                      style={{
+                        border: '1px solid var(--accent-amber-dim)',
+                        color: 'var(--accent-amber)',
+                        background: 'transparent'
+                      }}
+                    >
+                      Return to Era
+                    </motion.button>
+                  </>
                 )}
-                {passed && !perfectScore && !hasEarnedRare && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => { resetQuiz(); setShowQuiz(true) }}
-                    className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
-                    style={{
-                      border: '1px solid #3b82f680',
-                      color: '#60a5fa',
-                      background: 'transparent',
-                      fontFamily: "'Cinzel', serif"
-                    }}
-                  >
-                    Retry for Rare ◈
-                  </motion.button>
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  onClick={() => navigate(-1)}
-                  className="px-6 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
-                  style={{
-                    border: '1px solid var(--accent-amber-dim)',
-                    color: 'var(--accent-amber)',
-                    background: 'transparent'
-                  }}
-                >
-                  Return to Era
-                </motion.button>
               </div>
             </motion.div>
           </motion.div>
