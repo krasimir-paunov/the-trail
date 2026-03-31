@@ -81,7 +81,6 @@ export default function EraPage() {
   useEffect(() => {
     if (!id) return
     const eraId = parseInt(id)
-
     Promise.all([
       erasApi.getById(eraId),
       chaptersApi.getByEra(eraId)
@@ -89,9 +88,7 @@ export default function EraPage() {
       setEra(eraData)
       setChapters(chaptersData)
       setLoading(false)
-    }).catch(() => {
-      navigate('/')
-    })
+    }).catch(() => navigate('/'))
   }, [id, navigate])
 
   const getTheme = (colorTheme: string | null) => {
@@ -116,12 +113,13 @@ export default function EraPage() {
   }
 
   const theme = getTheme(era.colorTheme)
+  const masteredCount = chapters.filter(c => c.quizPassed).length
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--hero-dark)' }}>
 
       {/* ── Era Hero ── */}
-      <div className="relative h-[65vh] flex flex-col items-center justify-end pb-16 px-4">
+      <div className="relative h-[75vh] flex flex-col items-center justify-end pb-20 px-4">
         {theme.image && (
           <img
             src={theme.image}
@@ -131,7 +129,7 @@ export default function EraPage() {
           />
         )}
         <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, var(--hero-dark) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.2) 100%)' }}
+          style={{ background: 'linear-gradient(to top, var(--hero-dark) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.15) 100%)' }}
         />
 
         <motion.button
@@ -156,14 +154,11 @@ export default function EraPage() {
             Era {era.order}
           </motion.p>
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-5xl md:text-8xl font-bold mb-6"
-            style={{
-              color: 'var(--parchment-light)',
-              fontFamily: "'Cinzel', serif"
-            }}
+            className="text-6xl md:text-9xl font-bold mb-8"
+            style={{ color: 'var(--parchment-light)', fontFamily: "'Cinzel', serif", lineHeight: 1 }}
           >
             {era.name}
           </motion.h1>
@@ -171,14 +166,31 @@ export default function EraPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-xl leading-relaxed max-w-2xl mx-auto"
-            style={{
-              color: 'var(--parchment-dark)',
-              fontFamily: "'EB Garamond', serif"
-            }}
+            className="text-2xl leading-relaxed max-w-2xl mx-auto mb-12"
+            style={{ color: 'var(--parchment-dark)', fontFamily: "'EB Garamond', serif" }}
           >
             {era.description}
           </motion.p>
+
+          {/* Scroll indicator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="flex flex-col items-center gap-2"
+          >
+            <p className="text-xs tracking-[0.4em] uppercase"
+              style={{ color: theme.accentColor, opacity: 0.6 }}>
+              Begin the journey
+            </p>
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity }}
+              style={{ color: theme.accentColor, opacity: 0.6, fontSize: '1.2rem' }}
+            >
+              ↓
+            </motion.div>
+          </motion.div>
         </div>
       </div>
 
@@ -186,6 +198,7 @@ export default function EraPage() {
       <div className="parchment">
         <div className="max-w-4xl mx-auto px-8 py-16">
 
+          {/* Header row */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -203,17 +216,57 @@ export default function EraPage() {
                 {chapters.length} {chapters.length === 1 ? 'Chapter' : 'Chapters'}
               </p>
             </div>
-            {era.isGrandmasterUnlocked && (
-              <motion.p
-                animate={{ opacity: [0.7, 1, 0.7] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="text-base tracking-widest uppercase font-bold"
-                style={{ color: '#ca8a04', fontFamily: "'Cinzel', serif" }}
-              >
-                ★ Grandmaster Unlocked
-              </motion.p>
-            )}
+
+            {/* Progress summary */}
+            <div className="flex items-center gap-3">
+              {[...Array(chapters.length)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 rounded-full transition-all duration-500"
+                  style={{
+                    background: i < masteredCount ? theme.accentColor : 'transparent',
+                    border: `1.5px solid ${i < masteredCount ? theme.accentColor : 'var(--parchment-border)'}`,
+                  }}
+                />
+              ))}
+              <p className="text-sm ml-2"
+                style={{ color: 'var(--ink-muted)', fontFamily: "'Cinzel', serif" }}>
+                {masteredCount}/{chapters.length}
+              </p>
+            </div>
           </motion.div>
+
+          {/* Grandmaster banner */}
+          {era.isGrandmasterUnlocked && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-4 mb-10 py-4 px-6"
+              style={{
+                background: 'rgba(202,138,4,0.08)',
+                border: '1px solid rgba(202,138,4,0.3)',
+              }}
+            >
+              <motion.span
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ color: '#ca8a04', fontSize: '1.1rem' }}
+              >
+                ★
+              </motion.span>
+              <p className="text-sm tracking-[0.3em] uppercase font-bold"
+                style={{ color: '#ca8a04', fontFamily: "'Cinzel', serif" }}>
+                Era Grandmaster Unlocked
+              </p>
+              <motion.span
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ color: '#ca8a04', fontSize: '1.1rem' }}
+              >
+                ★
+              </motion.span>
+            </motion.div>
+          )}
 
           {chapters.length === 0 ? (
             <motion.div
@@ -234,91 +287,159 @@ export default function EraPage() {
               </p>
             </motion.div>
           ) : (
-            <div className="flex flex-col gap-4">
-              {chapters.map((chapter, index) => (
-                <motion.div
-                  key={chapter.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 + index * 0.1 }}
-                  onClick={() => navigate(`/chapters/${chapter.id}`)}
-                  className="relative overflow-hidden cursor-pointer transition-all duration-300 group"
-                  style={{
-                    border: '1px solid var(--parchment-border)',
-                    background: 'var(--parchment-light)',
-                  }}
-                  whileHover={{ borderColor: theme.accentColor }}
-                >
-                  <div className="p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                      <p className="text-3xl font-bold"
-                        style={{
-                          color: theme.accentColor,
-                          opacity: 0.4,
-                          fontFamily: "'Cinzel', serif"
-                        }}>
-                        {String(chapter.order).padStart(2, '0')}
-                      </p>
-                      <div>
-                        <h3 className="text-xl font-bold mb-1 transition-colors duration-300"
-                          style={{
-                            color: 'var(--ink-dark)',
-                            fontFamily: "'Cinzel', serif"
-                          }}>
-                          {chapter.title}
-                        </h3>
-                        <p className="text-base"
-                          style={{
-                            color: 'var(--ink-light)',
-                            fontFamily: "'EB Garamond', serif"
-                          }}>
-                          {chapter.subtitle}
-                        </p>
-                      </div>
+            <div className="flex flex-col gap-3">
+              {chapters.map((chapter, index) => {
+                const isFullyMastered = chapter.quizPassed
+
+                return (
+                  <motion.div
+                    key={chapter.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + index * 0.08 }}
+                    onClick={() => navigate(`/chapters/${chapter.id}`)}
+                    className="relative overflow-hidden cursor-pointer transition-all duration-300 group"
+                    style={{
+                      border: '1px solid var(--parchment-border)',
+                      borderLeft: isFullyMastered
+                        ? `3px solid ${theme.accentColor}`
+                        : '1px solid var(--parchment-border)',
+                      background: 'var(--parchment-light)',
+                    }}
+                    whileHover={{
+                      borderColor: theme.accentColor,
+                      borderLeftColor: theme.accentColor,
+                    }}
+                  >
+                    {/* Watermark chapter number */}
+                    <div
+                      className="absolute right-4 top-1/2 -translate-y-1/2 font-bold select-none pointer-events-none"
+                      style={{
+                        fontSize: '5rem',
+                        color: theme.accentColor,
+                        opacity: 0.045,
+                        fontFamily: "'Cinzel', serif",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {String(chapter.order).padStart(2, '0')}
                     </div>
 
-                    <div className="flex items-center gap-6 shrink-0">
-                      <div className="text-right hidden md:block">
-                        <p className="text-sm mb-1"
-                          style={{ color: 'var(--ink-muted)' }}>
-                          {chapter.estimatedMinutes} min read
+                    <div className="p-6 flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-6">
+                        {/* Chapter number */}
+                        <p className="text-3xl font-bold shrink-0"
+                          style={{
+                            color: theme.accentColor,
+                            opacity: isFullyMastered ? 0.9 : 0.35,
+                            fontFamily: "'Cinzel', serif",
+                            transition: 'opacity 0.3s'
+                          }}>
+                          {String(chapter.order).padStart(2, '0')}
                         </p>
-                        <div className="flex items-center gap-2 justify-end">
-                          {chapter.hasQuiz && (
-                            <span className="text-sm"
-                              style={{ color: theme.accentColor }}>
-                              Quiz
+
+                        <div>
+                          <h3 className="text-xl font-bold mb-1"
+                            style={{
+                              color: 'var(--ink-dark)',
+                              fontFamily: "'Cinzel', serif"
+                            }}>
+                            {chapter.title}
+                          </h3>
+                          <p className="text-base mb-2"
+                            style={{
+                              color: 'var(--ink-light)',
+                              fontFamily: "'EB Garamond', serif"
+                            }}>
+                            {chapter.subtitle}
+                          </p>
+
+                          {/* Badges row */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs tracking-wider px-2 py-0.5"
+                              style={{
+                                color: 'var(--ink-muted)',
+                                border: '1px solid var(--parchment-border)',
+                                fontFamily: "'Cinzel', serif"
+                              }}>
+                              {chapter.estimatedMinutes} min
                             </span>
-                          )}
-                          {chapter.hasCollectible && (
-                            <span className="text-sm" style={{ color: '#ca8a04' }}>
-                              Collectible
-                            </span>
-                          )}
+                            {chapter.hasQuiz && (
+                              <span className="text-xs tracking-wider px-2 py-0.5"
+                                style={{
+                                  color: theme.accentColor,
+                                  border: `1px solid ${theme.accentColor}40`,
+                                  fontFamily: "'Cinzel', serif"
+                                }}>
+                                Quiz
+                              </span>
+                            )}
+                            {chapter.hasCollectible && (
+                              <span className="text-xs tracking-wider px-2 py-0.5"
+                                style={{
+                                  color: '#ca8a04',
+                                  border: '1px solid rgba(202,138,4,0.3)',
+                                  fontFamily: "'Cinzel', serif"
+                                }}>
+                                Collectible
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="w-3 h-3 rounded-full border-2 transition-colors duration-500"
-                          style={{
-                            background: chapter.scrollCompleted ? 'var(--accent-amber)' : 'transparent',
-                            borderColor: chapter.scrollCompleted ? 'var(--accent-amber)' : 'var(--parchment-border)'
-                          }} />
-                        <div className="w-3 h-3 rounded-full border-2 transition-colors duration-500"
-                          style={{
-                            background: chapter.quizPassed ? '#ca8a04' : 'transparent',
-                            borderColor: chapter.quizPassed ? '#ca8a04' : 'var(--parchment-border)'
-                          }} />
-                      </div>
+                      {/* Right side — progress indicators */}
+                      <div className="flex items-center gap-5 shrink-0">
 
-                      <p className="text-sm tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        style={{ color: theme.accentColor, fontFamily: "'Cinzel', serif" }}>
-                        Enter →
-                      </p>
+                        {/* Read dot */}
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-2.5 h-2.5 rounded-full border-2 transition-all duration-500"
+                            style={{
+                              background: chapter.scrollCompleted ? 'var(--accent-amber)' : 'transparent',
+                              borderColor: chapter.scrollCompleted ? 'var(--accent-amber)' : 'var(--parchment-border)'
+                            }} />
+                          <p className="text-xs" style={{ color: 'var(--ink-muted)', fontFamily: "'Cinzel', serif" }}>
+                            Read
+                          </p>
+                        </div>
+
+                        {/* Common collectible dot */}
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="w-2.5 h-2.5 rounded-full border-2 transition-all duration-500"
+                            style={{
+                              background: chapter.commonCollectibleEarned ? '#d4a853' : 'transparent',
+                              borderColor: chapter.commonCollectibleEarned ? '#d4a853' : 'var(--parchment-border)'
+                            }} />
+                          <p className="text-xs" style={{ color: 'var(--ink-muted)', fontFamily: "'Cinzel', serif" }}>
+                            Common
+                          </p>
+                        </div>
+
+                        {/* Rare collectible diamond */}
+                        <div className="flex flex-col items-center gap-1">
+                          <div
+                            className="w-2.5 h-2.5 transition-all duration-500"
+                            style={{
+                              background: chapter.rareCollectibleEarned ? '#3b82f6' : 'transparent',
+                              border: `2px solid ${chapter.rareCollectibleEarned ? '#3b82f6' : 'var(--parchment-border)'}`,
+                              transform: 'rotate(45deg)',
+                            }}
+                          />
+                          <p className="text-xs" style={{ color: 'var(--ink-muted)', fontFamily: "'Cinzel', serif" }}>
+                            Rare
+                          </p>
+                        </div>
+
+                        {/* Enter arrow */}
+                        <p className="text-sm tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300 ml-2"
+                          style={{ color: theme.accentColor, fontFamily: "'Cinzel', serif" }}>
+                          Enter →
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                )
+              })}
             </div>
           )}
         </div>

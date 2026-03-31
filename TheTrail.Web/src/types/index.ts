@@ -29,6 +29,8 @@ export interface ChapterDto {
   rareCollectibleName: string | null;
   rareCollectibleDescription: string | null;
   rareCollectibleImageUrl: string | null;
+  commonCollectibleEarned: boolean;
+  rareCollectibleEarned: boolean;
 }
 
 export interface AuthResponseDto {

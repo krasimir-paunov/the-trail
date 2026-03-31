@@ -32,7 +32,7 @@ namespace TheTrail.Services
         {
             var result = new QuizResultDto { Passed = passed, PerfectScore = perfectScore };
 
-            // ── Update progress record 
+            // ── Update progress record ──────────────────────────────────────
             UserChapterProgress? progress = await _progressRepository
                 .All()
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.ChapterId == chapterId);
@@ -54,7 +54,7 @@ namespace TheTrail.Services
                 await _progressRepository.UpdateAsync(progress);
             }
 
-            // ── Award Common collectible (pass with 60%+) 
+            // ── Award Common collectible (pass with 60%+) ───────────────────
             if (passed)
             {
                 Collectible? commonCollectible = await _collectibleRepository
@@ -79,7 +79,7 @@ namespace TheTrail.Services
                 }
             }
 
-            // ── Award Rare collectible (perfect score 5/5) 
+            // ── Award Rare collectible (perfect score 5/5) ──────────────────
             if (perfectScore)
             {
                 Collectible? rareCollectible = await _collectibleRepository
@@ -104,7 +104,7 @@ namespace TheTrail.Services
                 }
             }
 
-            // ── Check Legendary 
+            // ── Check Legendary ─────────────────────────────────────────────
             Chapter? chapter = await _chapterRepository
                 .AllAsNoTracking()
                 .Include(c => c.Era)
@@ -366,6 +366,17 @@ namespace TheTrail.Services
             Collectible? rare = chapter.Collectibles
                 .FirstOrDefault(c => c.Rarity == Domain.Enums.Rarity.Rare);
 
+            // ── Collectible earned status ───────────────────────────────────
+            bool commonEarned = userId != null && common != null &&
+                _userCollectibleRepository
+                    .AllAsNoTracking()
+                    .Any(uc => uc.UserId == userId && uc.CollectibleId == common.Id);
+
+            bool rareEarned = userId != null && rare != null &&
+                _userCollectibleRepository
+                    .AllAsNoTracking()
+                    .Any(uc => uc.UserId == userId && uc.CollectibleId == rare.Id);
+
             return new ChapterDto
             {
                 Id = chapter.Id,
@@ -386,6 +397,8 @@ namespace TheTrail.Services
                 RareCollectibleName = rare?.Name,
                 RareCollectibleDescription = rare?.Description,
                 RareCollectibleImageUrl = rare?.ArtworkUrl,
+                CommonCollectibleEarned = commonEarned,
+                RareCollectibleEarned = rareEarned,
             };
         }
     }

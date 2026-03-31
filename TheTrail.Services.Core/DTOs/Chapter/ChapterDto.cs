@@ -23,5 +23,7 @@ namespace TheTrail.Services.Core.DTOs.Chapter
         public string? RareCollectibleDescription { get; set; }
         public string? RareCollectibleImageUrl { get; set; }
         public bool HasRareCollectible { get; set; }
+        public bool CommonCollectibleEarned { get; set; }
+        public bool RareCollectibleEarned { get; set; }
     }
 }
