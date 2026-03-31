@@ -523,22 +523,58 @@ export default function ChapterPage() {
                             ? 'Prove your knowledge to earn your reward.'
                             : 'Chapter complete.'}
                         </p>
-                        {chapter.hasQuiz && quizQuestions.length > 0 && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setShowQuiz(true)}
-                            className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
-                            style={{
-                              border: '1px solid var(--accent-amber-dim)',
-                              color: 'var(--ink-dark)',
-                              background: 'var(--parchment-mid)',
-                              fontFamily: "'Cinzel', serif"
-                            }}
-                          >
-                            Test Your Knowledge →
-                          </motion.button>
-                        )}
+{chapter.hasQuiz && quizQuestions.length > 0 && (
+  isAuthenticated ? (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => setShowQuiz(true)}
+      className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+      style={{
+        border: '1px solid var(--accent-amber-dim)',
+        color: 'var(--ink-dark)',
+        background: 'var(--parchment-mid)',
+        fontFamily: "'Cinzel', serif"
+      }}
+    >
+      Test Your Knowledge →
+    </motion.button>
+  ) : (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-sm mx-auto px-8 py-6 text-center"
+      style={{
+        background: 'var(--parchment-mid)',
+        borderLeft: '3px solid var(--accent-amber)',
+      }}
+    >
+      <p className="text-xs tracking-[0.3em] uppercase mb-3"
+        style={{ color: 'var(--accent-amber)', fontFamily: "'Cinzel', serif" }}>
+        Join The Trail
+      </p>
+      <p className="text-base mb-5 leading-relaxed"
+        style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
+        Register to take the quiz, earn collectibles, and build your trophy cabinet.
+      </p>
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => navigate('/register')}
+        className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+        style={{
+          background: 'var(--accent-amber)',
+          color: 'var(--ink-dark)',
+          border: 'none',
+          fontFamily: "'Cinzel', serif",
+          fontWeight: '700',
+        }}
+      >
+        Create Account →
+      </motion.button>
+    </motion.div>
+  )
+)}
                       </>
                     )}
                   </motion.div>
