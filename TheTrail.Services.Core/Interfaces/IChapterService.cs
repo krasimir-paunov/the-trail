@@ -13,7 +13,7 @@ namespace TheTrail.Services.Core.Interfaces
         Task<QuizDto?> GetQuizAsync(int chapterId);
         Task<string?> GetContentAsync(int chapterId);
         Task<bool> CheckAnswerAsync(int questionId, string answer);
-        Task SaveQuizResultAsync(int chapterId, string userId, bool passed, bool perfectScore);
+        Task<QuizResultDto> SaveQuizResultAsync(int chapterId, string userId, bool passed, bool perfectScore);
         Task<bool> CheckEraGrandmasterAsync(int eraId, string userId);
         Task AwardLegendaryIfEarnedAsync(int eraId, string userId);
     }

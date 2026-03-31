@@ -28,9 +28,11 @@ namespace TheTrail.Services
             _userCollectibleRepository = userCollectibleRepository;
         }
 
-        public async Task SaveQuizResultAsync(int chapterId, string userId, bool passed, bool perfectScore)
+        public async Task<QuizResultDto> SaveQuizResultAsync(int chapterId, string userId, bool passed, bool perfectScore)
         {
-            // ── Update progress record ──────────────────────────────────────
+            var result = new QuizResultDto { Passed = passed, PerfectScore = perfectScore };
+
+            // ── Update progress record 
             UserChapterProgress? progress = await _progressRepository
                 .All()
                 .FirstOrDefaultAsync(p => p.UserId == userId && p.ChapterId == chapterId);
@@ -52,7 +54,7 @@ namespace TheTrail.Services
                 await _progressRepository.UpdateAsync(progress);
             }
 
-            // ── Award Common collectible (pass with 60%+) ───────────────────
+            // ── Award Common collectible (pass with 60%+) 
             if (passed)
             {
                 Collectible? commonCollectible = await _collectibleRepository
@@ -68,18 +70,16 @@ namespace TheTrail.Services
                                      && uc.CollectibleId == commonCollectible.Id);
 
                     if (!alreadyEarned)
-                    {
                         await _userCollectibleRepository.AddAsync(new UserCollectible
                         {
                             UserId = userId,
-                            CollectibleId = commonCollectible.Id,  // ← fixed
+                            CollectibleId = commonCollectible.Id,
                             EarnedOn = DateTime.UtcNow
                         });
-                    }
                 }
             }
 
-            // ── Award Rare collectible (perfect score 5/5) ──────────────────
+            // ── Award Rare collectible (perfect score 5/5) 
             if (perfectScore)
             {
                 Collectible? rareCollectible = await _collectibleRepository
@@ -95,26 +95,56 @@ namespace TheTrail.Services
                                      && uc.CollectibleId == rareCollectible.Id);
 
                     if (!alreadyEarned)
-                    {
                         await _userCollectibleRepository.AddAsync(new UserCollectible
                         {
                             UserId = userId,
                             CollectibleId = rareCollectible.Id,
                             EarnedOn = DateTime.UtcNow
                         });
-                    }
                 }
             }
 
-            // ── Check if era is now Grandmaster → award Legendary ───────────
+            // ── Check Legendary 
             Chapter? chapter = await _chapterRepository
                 .AllAsNoTracking()
+                .Include(c => c.Era)
                 .FirstOrDefaultAsync(c => c.Id == chapterId);
 
             if (chapter != null)
             {
-                await AwardLegendaryIfEarnedAsync(chapter.EraId, userId);
+                bool wasAlreadyGrandmaster = await _userCollectibleRepository
+                    .AllAsNoTracking()
+                    .AnyAsync(uc => uc.UserId == userId
+                                 && uc.Collectible!.EraId == chapter.EraId
+                                 && uc.Collectible!.Rarity == Domain.Enums.Rarity.Legendary);
+
+                if (!wasAlreadyGrandmaster)
+                {
+                    await AwardLegendaryIfEarnedAsync(chapter.EraId, userId);
+
+                    bool nowGrandmaster = await _userCollectibleRepository
+                        .AllAsNoTracking()
+                        .AnyAsync(uc => uc.UserId == userId
+                                     && uc.Collectible!.EraId == chapter.EraId
+                                     && uc.Collectible!.Rarity == Domain.Enums.Rarity.Legendary);
+
+                    if (nowGrandmaster)
+                    {
+                        Collectible? legendary = await _collectibleRepository
+                            .AllAsNoTracking()
+                            .FirstOrDefaultAsync(c => c.EraId == chapter.EraId
+                                                   && c.Rarity == Domain.Enums.Rarity.Legendary);
+
+                        result.LegendaryAwarded = true;
+                        result.LegendaryName = legendary?.Name;
+                        result.LegendaryDescription = legendary?.Description;
+                        result.LegendaryImageUrl = legendary?.ArtworkUrl;
+                        result.EraName = chapter.Era?.Name;
+                    }
+                }
             }
+
+            return result;
         }
 
         public async Task<IEnumerable<ChapterDto>> GetByEraAsync(int eraId, string? userId)

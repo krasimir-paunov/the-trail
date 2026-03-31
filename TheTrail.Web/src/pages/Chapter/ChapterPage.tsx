@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { chaptersApi } from '../../api/chaptersApi.ts'
 import { useAuth } from '../../context/AuthContext.tsx'
 import type { ChapterDto, QuizQuestion } from '../../types/index.ts'
+import EraGrandmasterModal from '../../components/EraGrandmasterModal.tsx'
 
 interface ParagraphBlock { type: 'paragraph'; text: string }
 interface FactBlock { type: 'fact'; title: string; text: string }
@@ -36,6 +37,15 @@ export default function ChapterPage() {
   const [earnedRare, setEarnedRare] = useState(false)
   const [hasEarnedRare, setHasEarnedRare] = useState(false)
 
+  // ── Grandmaster state ─────────────────────────────────────────────
+  const [showGrandmaster, setShowGrandmaster] = useState(false)
+  const [grandmasterData, setGrandmasterData] = useState<{
+    eraName: string
+    legendaryName: string
+    legendaryDescription: string
+    legendaryImageUrl: string | null
+  } | null>(null)
+
   // ── Load chapter data ─────────────────────────────────────────────
   useEffect(() => {
     if (!id) return
@@ -65,8 +75,7 @@ export default function ChapterPage() {
   // ── Check localStorage for rare earned status ─────────────────────
   useEffect(() => {
     if (!id) return
-    const rareKey = `rare_earned_${id}`
-    if (localStorage.getItem(rareKey) === 'true') {
+    if (localStorage.getItem(`rare_earned_${id}`) === 'true') {
       setHasEarnedRare(true)
     }
   }, [id])
@@ -96,9 +105,7 @@ export default function ChapterPage() {
     if (selectedAnswer) return
     setSelectedAnswer(option)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     const token = localStorage.getItem('token')
     if (token) headers['Authorization'] = `Bearer ${token}`
 
@@ -135,7 +142,6 @@ export default function ChapterPage() {
               if (isPerfect) {
                 setEarnedRare(true)
                 setHasEarnedRare(true)
-                // Persist so it survives page reloads
                 if (id) localStorage.setItem(`rare_earned_${id}`, 'true')
               }
 
@@ -143,11 +149,26 @@ export default function ChapterPage() {
                 setQuizComplete(true)
                 setQuizPassed(isPassed)
 
-                if (isPassed && isAuthenticated && id) {
-                  chaptersApi.saveQuizResult(parseInt(id), isPassed, isPerfect).catch(() => {})
-                }
                 if (isPassed) {
-                  setTimeout(() => setShowReward(true), 1200)
+                  if (isAuthenticated && id) {
+                    chaptersApi.saveQuizResult(parseInt(id), isPassed, isPerfect)
+                      .then((result) => {
+                        if (result?.legendaryAwarded) {
+                          setGrandmasterData({
+                            eraName: result.eraName ?? '',
+                            legendaryName: result.legendaryName ?? 'Era Grandmaster',
+                            legendaryDescription: result.legendaryDescription ?? '',
+                            legendaryImageUrl: result.legendaryImageUrl ?? null,
+                          })
+                        }
+                      })
+                      .catch(() => {})
+                      .finally(() => {
+                        setTimeout(() => setShowReward(true), 1200)
+                      })
+                  } else {
+                    setTimeout(() => setShowReward(true), 1200)
+                  }
                 }
               }, 100)
 
@@ -864,26 +885,44 @@ export default function ChapterPage() {
                 </>
               )}
 
+              {/* Continue button — becomes "Claim Your Legend" if legendary was awarded */}
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: earnedRare ? 2.4 : 1.4 }}
                 whileHover={{ scale: 1.05 }}
-                onClick={() => navigate(-1)}
+                onClick={() => {
+                  if (grandmasterData) {
+                    setShowReward(false)
+                    setShowGrandmaster(true)
+                  } else {
+                    navigate(-1)
+                  }
+                }}
                 className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all"
                 style={{
                   border: '1px solid var(--accent-amber)',
-                  color: 'var(--accent-amber)',
-                  background: 'transparent',
+                  color: grandmasterData ? '#1a0f05' : 'var(--accent-amber)',
+                  background: grandmasterData ? '#d4a853' : 'transparent',
                   fontFamily: "'Cinzel', serif"
                 }}
               >
-                Continue The Trail →
+                {grandmasterData ? 'Claim Your Legend →' : 'Continue The Trail →'}
               </motion.button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Era Grandmaster celebration */}
+      <EraGrandmasterModal
+        show={showGrandmaster}
+        eraName={grandmasterData?.eraName ?? ''}
+        legendaryName={grandmasterData?.legendaryName ?? ''}
+        legendaryDescription={grandmasterData?.legendaryDescription ?? ''}
+        legendaryImageUrl={grandmasterData?.legendaryImageUrl ?? null}
+      />
+
     </div>
   )
 }

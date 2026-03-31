@@ -142,8 +142,8 @@ namespace TheTrail.Api.Controllers
             string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized();
 
-            await _chapterService.SaveQuizResultAsync(id, userId, dto.Passed, dto.PerfectScore);
-            return Ok();
+            var result = await _chapterService.SaveQuizResultAsync(id, userId, dto.Passed, dto.PerfectScore);
+            return Ok(result);
         }
     }
 }
