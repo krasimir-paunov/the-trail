@@ -344,7 +344,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#1e1105' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0d0a06' }}>
 
       {/* Fixed bg */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
@@ -358,12 +358,15 @@ export default function ProfilePage() {
       <div className="relative" style={{ zIndex: 1 }}>
 
         {/* ══ HERO ══ */}
-        <div className="flex flex-col items-center text-center px-8 pt-20 pb-24">
+        <div className="flex flex-col items-center text-center px-8 pt-20 pb-24 relative">
+  <div className="absolute inset-0 pointer-events-none" style={{
+    background: 'radial-gradient(ellipse at 50% 0%, rgba(212,168,83,0.08) 0%, transparent 70%)'
+  }} />
           <motion.h1 initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9 }}
             style={{
               fontFamily: 'Cinzel, serif', fontSize: 'clamp(2.8rem, 6vw, 5rem)', fontWeight: 700,
-              color: '#d4a853', letterSpacing: '0.16em', textTransform: 'uppercase',
-              textShadow: '0 0 50px rgba(212,168,83,0.4), 0 2px 4px rgba(0,0,0,0.9)', marginBottom: '0.6rem',
+color: '#f5e8c8', letterSpacing: '0.16em', textTransform: 'uppercase',
+textShadow: '0 0 60px rgba(212,168,83,0.25), 0 2px 4px rgba(0,0,0,0.9)', marginBottom: '0.6rem',
             }}>Explorer Profile</motion.h1>
 
           <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }}
@@ -783,56 +786,7 @@ export default function ProfilePage() {
               </div>
             </motion.div>
 
-            {/* Footer */}
-            <div style={{
-              background: 'linear-gradient(to bottom, #1a0d04, #120800)',
-              border: '1px solid rgba(120,70,15,0.35)',
-              borderTop: '3px solid rgba(120,70,15,0.5)',
-              padding: '28px 48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
-            }}>
-              <div>
-                <p style={{
-                  fontFamily: 'Cinzel, serif', fontSize: '0.72rem',
-                  letterSpacing: '0.45em', color: 'rgba(212,168,83,0.5)',
-                  textTransform: 'uppercase', marginBottom: '0.35rem',
-                }}>The Trail</p>
-                <p style={{
-                  fontFamily: 'EB Garamond, serif', fontSize: '1.05rem',
-                  color: 'rgba(212,168,83,0.75)', fontStyle: 'italic',
-                }}>A Chronicle of Human History</p>
-              </div>
-              <div className="flex items-center gap-3 flex-1 mx-12">
-                <div className="h-px flex-1" style={{ backgroundColor: 'rgba(212,168,83,0.18)' }} />
-                <span style={{ color: 'rgba(212,168,83,0.3)', fontSize: '0.9rem' }}>✦</span>
-                <div className="h-px flex-1" style={{ backgroundColor: 'rgba(212,168,83,0.18)' }} />
-              </div>
-              <div className="text-right">
-                <p style={{
-                  fontFamily: 'Cinzel, serif', fontSize: '0.68rem',
-                  letterSpacing: '0.4em', color: 'rgba(212,168,83,0.45)',
-                  textTransform: 'uppercase', marginBottom: '0.35rem',
-                }}>Progress</p>
-                <p style={{
-                  fontFamily: 'Cinzel, serif', fontSize: '1.3rem',
-                  fontWeight: 700, color: '#d4a853',
-                  textShadow: '0 0 20px rgba(212,168,83,0.3)',
-                }}>
-                  {profile.eraProgress.filter(e => e.isGrandmasterUnlocked).length}
-                  <span style={{ color: 'rgba(212,168,83,0.35)', fontSize: '1rem' }}>
-                    {' '}/ {profile.eraProgress.length}
-                  </span>
-                  <span style={{
-                    fontFamily: 'Cinzel, serif', fontSize: '0.7rem',
-                    letterSpacing: '0.25em', color: 'rgba(212,168,83,0.55)',
-                    display: 'block', fontWeight: 400, marginTop: '2px',
-                  }}>ERAS MASTERED</span>
-                </p>
-              </div>
-            </div>
+
           </div>
         </div>
 

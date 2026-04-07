@@ -1,21 +1,21 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ── Parchment Palette ─────────────────────────────────── */
 :root {
-  --parchment-light:  #f5e8c8;
-  --parchment-mid:    #e8d5a8;
-  --parchment-dark:   #d4b896;
+  --parchment-light: #f5e8c8;
+  --parchment-mid: #e8d5a8;
+  --parchment-dark: #d4b896;
   --parchment-border: #c4a47a;
 
-  --ink-dark:         #1a0f05;
-  --ink-medium:       #3d2b1a;
-  --ink-light:        #6b4c30;
-  --ink-muted:        #9a7a5a;
+  --ink-dark: #1a0f05;
+  --ink-medium: #3d2b1a;
+  --ink-light: #6b4c30;
+  --ink-muted: #9a7a5a;
 
-  --hero-dark:        #0d0a06;
-  --hero-mid:         #1a1208;
+  --hero-dark: #0d0a06;
+  --hero-mid: #1a1208;
 
-  --accent-amber:     #d4a853;
+  --accent-amber: #d4a853;
   --accent-amber-dim: #a07830;
 }
 
@@ -34,11 +34,17 @@
 /* ── Parchment content areas ───────────────────────────── */
 .parchment {
   background-color: var(--parchment-light);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
 /* ── Scrollbar ─────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--hero-dark); }
-::-webkit-scrollbar-thumb { background: var(--accent-amber-dim); border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--hero-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-amber-dim);
+  border-radius: 3px;
+}

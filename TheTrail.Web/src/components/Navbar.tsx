@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.tsx'
+import { erasApi } from '../api/erasApi.ts'
+import type { EraDto } from '../types/index.ts'
 
 type NavStyle = 'fullscreen' | 'drawer'
 
@@ -14,6 +16,9 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const [erasOpen, setErasOpen] = useState(false)
+  const [eras, setEras] = useState<EraDto[]>([])
+  const erasRef = useRef<HTMLDivElement>(null)
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -23,8 +28,24 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    erasApi.getAll().then(setEras).catch(() => {})
+  }, [])
+
+  // Close eras dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (erasRef.current && !erasRef.current.contains(e.target as Node)) {
+        setErasOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const handleNavigate = (path: string) => {
     setIsOpen(false)
+    setErasOpen(false)
     navigate(path)
   }
 
@@ -36,7 +57,7 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
 
   return (
     <>
-      {/* ── Trigger button — large compass rose with glow on hover ── */}
+      {/* ── Trigger button ── */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         animate={{ opacity: isOpen ? 0 : 1, pointerEvents: isOpen ? 'none' : 'auto' }}
@@ -46,32 +67,21 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
         className="fixed top-4 right-4 z-50 cursor-pointer"
         style={{ background: 'none', border: 'none', padding: 0, width: '72px', height: '72px' }}
       >
-        {/* Glow ring behind image — animates on hover */}
         <motion.div
-          animate={{
-            opacity: hovered ? 1 : 0,
-            scale: hovered ? 1.15 : 0.9,
-          }}
+          animate={{ opacity: hovered ? 1 : 0, scale: hovered ? 1.15 : 0.9 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
           style={{
-            position: 'absolute',
-            inset: '-8px',
-            borderRadius: '50%',
+            position: 'absolute', inset: '-8px', borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(212,168,83,0.35) 0%, transparent 70%)',
-            filter: 'blur(8px)',
-            pointerEvents: 'none',
+            filter: 'blur(8px)', pointerEvents: 'none',
           }}
         />
-        {/* Secondary tight glow */}
         <motion.div
           animate={{ opacity: hovered ? 0.8 : 0 }}
           transition={{ duration: 0.3 }}
           style={{
-            position: 'absolute',
-            inset: '0',
-            borderRadius: '50%',
-            boxShadow: '0 0 24px 8px rgba(212,168,83,0.4)',
-            pointerEvents: 'none',
+            position: 'absolute', inset: '0', borderRadius: '50%',
+            boxShadow: '0 0 24px 8px rgba(212,168,83,0.4)', pointerEvents: 'none',
           }}
         />
         <motion.img
@@ -139,22 +149,80 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                 </motion.h1>
 
                 <nav className="relative z-10 flex flex-col items-center gap-6">
-                  {[
-                    { label: 'Home', path: '/' },
-                    { label: 'Explore Eras', path: '/#eras' },
-                    ...(isAuthenticated ? [{ label: 'My Profile', path: '/profile' }] : []),
-                  ].map((link, i) => (
+                  {/* Home */}
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    onClick={() => handleNavigate('/')}
+                    className="text-3xl md:text-4xl font-bold text-stone-300 hover:text-amber-200 transition-colors duration-300 tracking-wide cursor-pointer"
+                  >
+                    Home
+                  </motion.button>
+
+                  {/* Eras dropdown */}
+                  <motion.div
+                    ref={erasRef}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.28 }}
+                    className="flex flex-col items-center"
+                  >
+                    <button
+                      onClick={() => setErasOpen(prev => !prev)}
+                      className="text-3xl md:text-4xl font-bold text-stone-300 hover:text-amber-200 transition-colors duration-300 tracking-wide cursor-pointer flex items-center gap-3"
+                    >
+                      Explore Eras
+                      <motion.span
+                        animate={{ rotate: erasOpen ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                        style={{ fontSize: '1.5rem', lineHeight: 1, display: 'inline-block' }}
+                      >
+                        ↓
+                      </motion.span>
+                    </button>
+
+                    <AnimatePresence>
+                      {erasOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+                          className="overflow-hidden mt-4"
+                        >
+                          <div className="flex flex-col items-center gap-3 py-2">
+                            {eras.map((era, i) => (
+                              <motion.button
+                                key={era.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.04 }}
+                                onClick={() => handleNavigate(`/eras/${era.id}`)}
+                                className="text-lg text-stone-400 hover:text-amber-200 transition-colors duration-200 tracking-widest uppercase cursor-pointer"
+                                style={{ fontFamily: "'Cinzel', serif" }}
+                              >
+                                {era.name}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* My Profile */}
+                  {isAuthenticated && (
                     <motion.button
-                      key={link.path}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 + i * 0.08 }}
-                      onClick={() => handleNavigate(link.path)}
+                      transition={{ delay: 0.36 }}
+                      onClick={() => handleNavigate('/profile')}
                       className="text-3xl md:text-4xl font-bold text-stone-300 hover:text-amber-200 transition-colors duration-300 tracking-wide cursor-pointer"
                     >
-                      {link.label}
+                      My Profile
                     </motion.button>
-                  ))}
+                  )}
                 </nav>
 
                 <motion.div
@@ -221,23 +289,79 @@ export default function Navbar({ style = 'fullscreen' }: NavbarProps) {
                     </button>
                   </div>
 
-                  <nav className="relative z-10 flex flex-col p-6 gap-2 flex-1">
-                    {[
-                      { label: 'Home', path: '/' },
-                      { label: 'Explore Eras', path: '/#eras' },
-                      ...(isAuthenticated ? [{ label: 'My Profile', path: '/profile' }] : []),
-                    ].map((link, i) => (
+                  <nav className="relative z-10 flex flex-col p-6 gap-1 flex-1 overflow-y-auto">
+                    {/* Home */}
+                    <motion.button
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      onClick={() => handleNavigate('/')}
+                      className="text-left text-lg text-stone-300 hover:text-amber-200 transition-colors duration-300 py-3 border-b border-stone-800/50 tracking-wide cursor-pointer"
+                    >
+                      Home
+                    </motion.button>
+
+                    {/* Eras expandable */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.16 }}
+                    >
+                      <button
+                        onClick={() => setErasOpen(prev => !prev)}
+                        className="w-full text-left text-lg text-stone-300 hover:text-amber-200 transition-colors duration-300 py-3 border-b border-stone-800/50 tracking-wide cursor-pointer flex items-center justify-between"
+                      >
+                        Explore Eras
+                        <motion.span
+                          animate={{ rotate: erasOpen ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                          style={{ fontSize: '1rem' }}
+                        >
+                          ↓
+                        </motion.span>
+                      </button>
+
+                      <AnimatePresence>
+                        {erasOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex flex-col py-2 pl-4">
+                              {eras.map((era, i) => (
+                                <motion.button
+                                  key={era.id}
+                                  initial={{ opacity: 0, x: 10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: i * 0.04 }}
+                                  onClick={() => handleNavigate(`/eras/${era.id}`)}
+                                  className="text-left text-sm text-stone-400 hover:text-amber-200 transition-colors duration-200 py-2 tracking-widest uppercase cursor-pointer border-b border-stone-800/30"
+                                  style={{ fontFamily: "'Cinzel', serif" }}
+                                >
+                                  {era.name}
+                                </motion.button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+
+                    {/* My Profile */}
+                    {isAuthenticated && (
                       <motion.button
-                        key={link.path}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 + i * 0.06 }}
-                        onClick={() => handleNavigate(link.path)}
+                        transition={{ delay: 0.22 }}
+                        onClick={() => handleNavigate('/profile')}
                         className="text-left text-lg text-stone-300 hover:text-amber-200 transition-colors duration-300 py-3 border-b border-stone-800/50 tracking-wide cursor-pointer"
                       >
-                        {link.label}
+                        My Profile
                       </motion.button>
-                    ))}
+                    )}
                   </nav>
 
                   <motion.div
