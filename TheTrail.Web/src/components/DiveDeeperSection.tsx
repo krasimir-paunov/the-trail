@@ -53,10 +53,10 @@ export default function DiveDeeperSection({ slug }: Props) {
       style={{ borderTop: '1px solid var(--parchment-border)' }}
     >
       <div className="flex items-center gap-4 pt-10 mb-8">
-        <div className="h-px flex-1" style={{ background: 'var(--parchment-border)' }} />
+        <div className="h-px flex-1" style={{ background: 'var(--parchment-dark)' }} />
         <p
           className="text-xs tracking-[0.4em] uppercase"
-          style={{ color: 'var(--accent-amber)', fontFamily: "'Cinzel', serif" }}
+          style={{ color: 'var(--ink-medium)', fontFamily: "'Cinzel', serif" }}
         >
           Dive Deeper
         </p>
@@ -93,7 +93,7 @@ export default function DiveDeeperSection({ slug }: Props) {
             >
               Wikipedia
             </p>
-            <div className="h-px flex-1" style={{ background: 'var(--parchment-border)' }} />
+            <div className="h-px flex-1" style={{ background: 'var(--parchment-dark)' }} />
           </div>
 
           <h3
@@ -116,7 +116,7 @@ export default function DiveDeeperSection({ slug }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm tracking-widest uppercase transition-opacity duration-200 hover:opacity-70"
-              style={{ color: 'var(--accent-amber)', fontFamily: "'Cinzel', serif" }}
+              style={{ color: 'var(--ink-dark)', fontFamily: "'Cinzel', serif", textDecoration: 'underline', textUnderlineOffset: '3px' }}
             >
               Read on Wikipedia →
             </a>
