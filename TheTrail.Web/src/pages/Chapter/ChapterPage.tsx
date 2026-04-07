@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { chaptersApi } from '../../api/chaptersApi.ts'
 import { useAuth } from '../../context/AuthContext.tsx'
 import type { ChapterDto, QuizQuestion } from '../../types/index.ts'
 import EraGrandmasterModal from '../../components/EraGrandmasterModal.tsx'
+import DiveDeeperSection from '../../components/DiveDeeperSection.tsx'
 
 interface ParagraphBlock { type: 'paragraph'; text: string }
 interface FactBlock { type: 'fact'; title: string; text: string }
@@ -36,8 +37,6 @@ export default function ChapterPage() {
   const [showReward, setShowReward] = useState(false)
   const [earnedRare, setEarnedRare] = useState(false)
   const [hasEarnedRare, setHasEarnedRare] = useState(false)
-
-  // ── Grandmaster state ─────────────────────────────────────────────
   const [showGrandmaster, setShowGrandmaster] = useState(false)
   const [grandmasterData, setGrandmasterData] = useState<{
     eraName: string
@@ -50,7 +49,6 @@ export default function ChapterPage() {
   useEffect(() => {
     if (!id) return
     const chapterId = parseInt(id)
-
     Promise.all([
       chaptersApi.getById(chapterId),
       chaptersApi.getContent(chapterId),
@@ -75,9 +73,8 @@ export default function ChapterPage() {
   // ── Check localStorage for rare earned status ─────────────────────
   useEffect(() => {
     if (!id) return
-    if (localStorage.getItem(`rare_earned_${id}`) === 'true') {
-      setHasEarnedRare(true)
-    }
+    const earned = localStorage.getItem(`rare_earned_${id}`) === 'true'
+    if (earned) setHasEarnedRare(true)
   }, [id])
 
   // ── Scroll progress ───────────────────────────────────────────────
@@ -87,7 +84,6 @@ export default function ChapterPage() {
       const docHeight = document.documentElement.scrollHeight - window.innerHeight
       const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
       setScrollProgress(Math.min(progress, 100))
-
       if (progress >= 95 && !scrollCompleted) {
         setScrollCompleted(true)
         if (isAuthenticated && id) {
@@ -95,7 +91,6 @@ export default function ChapterPage() {
         }
       }
     }
-
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [scrollCompleted, isAuthenticated, id])
@@ -469,6 +464,11 @@ export default function ChapterPage() {
               </div>
             )}
 
+            {/* Dive Deeper */}
+            {chapter.wikiSlug && (
+              <DiveDeeperSection slug={chapter.wikiSlug} />
+            )}
+
             <div ref={bottomRef} className="mt-24">
               <AnimatePresence>
                 {scrollCompleted && !showQuiz && (
@@ -523,58 +523,58 @@ export default function ChapterPage() {
                             ? 'Prove your knowledge to earn your reward.'
                             : 'Chapter complete.'}
                         </p>
-{chapter.hasQuiz && quizQuestions.length > 0 && (
-  isAuthenticated ? (
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => setShowQuiz(true)}
-      className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
-      style={{
-        border: '1px solid var(--accent-amber-dim)',
-        color: 'var(--ink-dark)',
-        background: 'var(--parchment-mid)',
-        fontFamily: "'Cinzel', serif"
-      }}
-    >
-      Test Your Knowledge →
-    </motion.button>
-  ) : (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-sm mx-auto px-8 py-6 text-center"
-      style={{
-        background: 'var(--parchment-mid)',
-        borderLeft: '3px solid var(--accent-amber)',
-      }}
-    >
-      <p className="text-xs tracking-[0.3em] uppercase mb-3"
-        style={{ color: 'var(--accent-amber)', fontFamily: "'Cinzel', serif" }}>
-        Join The Trail
-      </p>
-      <p className="text-base mb-5 leading-relaxed"
-        style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
-        Register to take the quiz, earn collectibles, and build your trophy cabinet.
-      </p>
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => navigate('/register')}
-        className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
-        style={{
-          background: 'var(--accent-amber)',
-          color: 'var(--ink-dark)',
-          border: 'none',
-          fontFamily: "'Cinzel', serif",
-          fontWeight: '700',
-        }}
-      >
-        Create Account →
-      </motion.button>
-    </motion.div>
-  )
-)}
+                        {chapter.hasQuiz && quizQuestions.length > 0 && (
+                          isAuthenticated ? (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowQuiz(true)}
+                              className="px-8 py-4 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+                              style={{
+                                border: '1px solid var(--accent-amber-dim)',
+                                color: 'var(--ink-dark)',
+                                background: 'var(--parchment-mid)',
+                                fontFamily: "'Cinzel', serif"
+                              }}
+                            >
+                              Test Your Knowledge →
+                            </motion.button>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="max-w-sm mx-auto px-8 py-6 text-center"
+                              style={{
+                                background: 'var(--parchment-mid)',
+                                borderLeft: '3px solid var(--accent-amber)',
+                              }}
+                            >
+                              <p className="text-xs tracking-[0.3em] uppercase mb-3"
+                                style={{ color: 'var(--accent-amber)', fontFamily: "'Cinzel', serif" }}>
+                                Join The Trail
+                              </p>
+                              <p className="text-base mb-5 leading-relaxed"
+                                style={{ color: 'var(--ink-medium)', fontFamily: "'EB Garamond', serif" }}>
+                                Register to take the quiz, earn collectibles, and build your trophy cabinet.
+                              </p>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/register')}
+                                className="px-8 py-3 text-sm tracking-widest uppercase cursor-pointer transition-all duration-300"
+                                style={{
+                                  background: 'var(--accent-amber)',
+                                  color: 'var(--ink-dark)',
+                                  border: 'none',
+                                  fontFamily: "'Cinzel', serif",
+                                  fontWeight: '700',
+                                }}
+                              >
+                                Create Account →
+                              </motion.button>
+                            </motion.div>
+                          )
+                        )}
                       </>
                     )}
                   </motion.div>
@@ -731,7 +731,6 @@ export default function ChapterPage() {
                   : 'The trail is long. Study and try again.'}
               </p>
 
-              {/* Buttons — only shown on failure */}
               <div className="flex gap-4 justify-center">
                 {!passed && (
                   <>
@@ -909,7 +908,6 @@ export default function ChapterPage() {
                 </>
               )}
 
-              {/* Continue button — becomes "Claim Your Legend" if legendary was awarded */}
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

@@ -25,5 +25,6 @@ namespace TheTrail.Services.Core.DTOs.Chapter
         public bool HasRareCollectible { get; set; }
         public bool CommonCollectibleEarned { get; set; }
         public bool RareCollectibleEarned { get; set; }
+        public string? WikiSlug { get; set; }
     }
 }

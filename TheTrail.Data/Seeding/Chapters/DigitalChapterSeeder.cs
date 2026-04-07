@@ -36,6 +36,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 8,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "History_of_the_Internet",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -77,6 +78,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Personal_computer",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -118,6 +120,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Space_Race",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -159,6 +162,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 8,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Human_Genome_Project",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -200,6 +204,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Artificial_intelligence",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheTrail.Data;
@@ -11,9 +12,11 @@ using TheTrail.Data;
 namespace TheTrail.Data.Migrations
 {
     [DbContext(typeof(TheTrailDbContext))]
-    partial class TheTrailDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260407154452_AddWikiSlugToChapter")]
+    partial class AddWikiSlugToChapter
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -25,6 +25,7 @@
         public Era Era { get; set; } = null!;
 
         public Quiz? Quiz { get; set; }
+        public string? WikiSlug { get; set; }
 
         public ICollection<Collectible> Collectibles { get; set; } = new HashSet<Collectible>();
 

@@ -36,6 +36,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Christopher_Columbus",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -77,6 +78,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 8,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Vasco_da_Gama",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -118,6 +120,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Ferdinand_Magellan",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -159,6 +162,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Spanish_conquest_of_the_Aztec_Empire",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -200,6 +204,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 8,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Columbian_exchange",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();

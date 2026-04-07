@@ -36,6 +36,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "World_War_I",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -77,6 +78,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "French_Revolution",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -118,6 +120,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Industrial_Revolution",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -159,6 +162,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 10,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "World_War_II",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();
@@ -200,6 +204,7 @@ namespace TheTrail.Data.Seeding.Chapters
                 EstimatedMinutes = 9,
                 EraId = eraId,
                 IsPublished = true,
+                WikiSlug = "Cold_War",
                 CreatedOn = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
             await context.SaveChangesAsync();

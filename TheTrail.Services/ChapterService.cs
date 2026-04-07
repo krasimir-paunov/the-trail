@@ -399,6 +399,7 @@ namespace TheTrail.Services
                 RareCollectibleImageUrl = rare?.ArtworkUrl,
                 CommonCollectibleEarned = commonEarned,
                 RareCollectibleEarned = rareEarned,
+                WikiSlug = chapter.WikiSlug
             };
         }
     }

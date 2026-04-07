@@ -31,6 +31,7 @@ export interface ChapterDto {
   rareCollectibleImageUrl: string | null;
   commonCollectibleEarned: boolean;
   rareCollectibleEarned: boolean;
+  wikiSlug: string | null;
 }
 
 export interface AuthResponseDto {
