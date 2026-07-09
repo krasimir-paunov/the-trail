@@ -21,55 +21,55 @@ The Trail is an interactive history encyclopedia where users journey through sev
     <td align="center"><b>Navigation</b></td>
   </tr>
   <tr>
-    <td><a href="screenshots/landing-page.jpg"><img src="screenshots/landing-page.jpg" width="400"/></a></td>
-    <td><a href="screenshots/navigation.jpg"><img src="screenshots/navigation.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/landing-page.jpg"><img src="screenshots/landing-page.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/navigation.jpg"><img src="screenshots/navigation.jpg" width="400"/></a></td>
   </tr>
   <tr>
     <td align="center"><b>Choose Your Era</b></td>
     <td align="center"><b>Eras of History</b></td>
   </tr>
   <tr>
-    <td><a href="screenshots/choose-era.jpg"><img src="screenshots/choose-era.jpg" width="400"/></a></td>
-    <td><a href="screenshots/eras-of-history.jpg"><img src="screenshots/eras-of-history.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/choose-era.jpg"><img src="screenshots/choose-era.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/eras-of-history.jpg"><img src="screenshots/eras-of-history.jpg" width="400"/></a></td>
   </tr>
   <tr>
     <td align="center"><b>Chapter Select</b></td>
     <td align="center"><b>Chapter Reading</b></td>
   </tr>
   <tr>
-    <td><a href="screenshots/chapter-select.jpg"><img src="screenshots/chapter-select.jpg" width="400"/></a></td>
-    <td><a href="screenshots/chapter.jpg"><img src="screenshots/chapter.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/chapter-select.jpg"><img src="screenshots/chapter-select.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/chapter.jpg"><img src="screenshots/chapter.jpg" width="400"/></a></td>
   </tr>
   <tr>
     <td align="center"><b>Wikipedia Dive Deeper</b></td>
     <td align="center"><b>Quiz</b></td>
   </tr>
   <tr>
-    <td><a href="screenshots/wikipedia.jpg"><img src="screenshots/wikipedia.jpg" width="400"/></a></td>
-    <td><a href="screenshots/quizz.jpg"><img src="screenshots/quizz.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/wikipedia.jpg"><img src="screenshots/wikipedia.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/quizz.jpg"><img src="screenshots/quizz.jpg" width="400"/></a></td>
   </tr>
   <tr>
     <td align="center"><b>Reward Screen</b></td>
     <td align="center"><b>Collectible</b></td>
   </tr>
   <tr>
-    <td><a href="screenshots/reward.jpg"><img src="screenshots/reward.jpg" width="400"/></a></td>
-    <td><a href="screenshots/collectable.jpg"><img src="screenshots/collectable.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/reward.jpg"><img src="screenshots/reward.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/collectable.jpg"><img src="screenshots/collectable.jpg" width="400"/></a></td>
   </tr>
   <tr>
     <td align="center"><b>Explorer Profile</b></td>
     <td align="center"><b>Trophy Cabinet</b></td>
   </tr>
   <tr>
-    <td><a href="screenshots/explorer-profile.jpg"><img src="screenshots/explorer-profile.jpg" width="400"/></a></td>
-    <td><a href="screenshots/trophy-cabinet.jpg"><img src="screenshots/trophy-cabinet.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/explorer-profile.jpg"><img src="screenshots/explorer-profile.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/trophy-cabinet.jpg"><img src="screenshots/trophy-cabinet.jpg" width="400"/></a></td>
   </tr>
   <tr>
     <td align="center"><b>Create Account</b></td>
     <td></td>
   </tr>
   <tr>
-    <td><a href="screenshots/create-account.jpg"><img src="screenshots/create-account.jpg" width="400"/></a></td>
+    <td><a href="https://raw.githubusercontent.com/krasimir-paunov/the-trail/main/screenshots/create-account.jpg"><img src="screenshots/create-account.jpg" width="400"/></a></td>
     <td></td>
   </tr>
 </table>
